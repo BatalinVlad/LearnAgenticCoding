@@ -1,0 +1,20 @@
+{
+  "name": "simple-todo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal to-do app (Express API + React)",
+  "scripts": {
+    "start": "node server.js",
+    "build": "npm run build --prefix client",
+    "dev": "concurrently -n api,web -c blue,magenta \"nodemon server.js\" \"npm run dev --prefix client\"",
+    "dev:api": "nodemon server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.9"
+  }
+}

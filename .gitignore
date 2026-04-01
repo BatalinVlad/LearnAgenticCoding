@@ -1,0 +1,4 @@
+node_modules/
+.env
+todos.json
+client/dist

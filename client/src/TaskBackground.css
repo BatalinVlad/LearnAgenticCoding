@@ -1,0 +1,413 @@
+/* Full-viewport layer behind the app — purely decorative, not tied to todo state. */
+.task-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.task-bg__base {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    165deg,
+    #0f172a 0%,
+    #1e1b4b 35%,
+    #172554 70%,
+    #0c4a6e 100%
+  );
+}
+
+/* Green wash — fixed intensity (not driven by completion %) */
+.task-bg__bloom {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    circle at 50% 85%,
+    rgba(34, 197, 94, 0.35) 0%,
+    rgba(22, 163, 74, 0.14) 35%,
+    transparent 55%
+  );
+  animation: task-bg-bloom-pulse 10s ease-in-out infinite;
+}
+
+@keyframes task-bg-bloom-pulse {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08) translateY(-2%);
+    opacity: 0.92;
+  }
+}
+
+/* Slow drifting color orbs */
+.task-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.55;
+  animation: task-bg-drift 28s ease-in-out infinite;
+}
+
+.task-bg__orb--a {
+  width: min(90vw, 420px);
+  height: min(90vw, 420px);
+  left: -15%;
+  top: 10%;
+  background: rgba(99, 102, 241, 0.45);
+  animation-delay: 0s;
+}
+
+.task-bg__orb--b {
+  width: min(80vw, 360px);
+  height: min(80vw, 360px);
+  right: -12%;
+  top: 35%;
+  background: rgba(34, 197, 94, 0.32);
+  animation-delay: -9s;
+  animation-duration: 34s;
+}
+
+.task-bg__orb--c {
+  width: min(70vw, 300px);
+  height: min(70vw, 300px);
+  left: 25%;
+  bottom: -5%;
+  background: rgba(56, 189, 248, 0.28);
+  animation-delay: -14s;
+  animation-duration: 31s;
+}
+
+@keyframes task-bg-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -3%) scale(1.05);
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.98);
+  }
+}
+
+/* Subtle shifting mesh */
+.task-bg__mesh {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background: linear-gradient(
+    125deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 40%,
+    transparent 80%
+  );
+  background-size: 200% 200%;
+  animation: task-bg-mesh 22s linear infinite;
+}
+
+@keyframes task-bg-mesh {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Soft grid — “checklist paper” vibe */
+.task-bg__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.09;
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.06) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 20%, transparent 75%);
+}
+
+/* Floating “task chips” */
+.task-bg__floats {
+  position: absolute;
+  inset: 0;
+}
+
+.task-bg__float {
+  position: absolute;
+  width: 12px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.09);
+  animation: task-bg-float ease-in-out infinite;
+  animation-duration: 13s;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.08);
+}
+
+.task-bg__float[data-i='0'] {
+  left: 8%;
+  top: 22%;
+  animation-delay: 0s;
+}
+.task-bg__float[data-i='1'] {
+  left: 18%;
+  top: 68%;
+  animation-delay: -2s;
+}
+.task-bg__float[data-i='2'] {
+  left: 88%;
+  top: 18%;
+  animation-delay: -4s;
+}
+.task-bg__float[data-i='3'] {
+  left: 72%;
+  top: 42%;
+  animation-delay: -1s;
+}
+.task-bg__float[data-i='4'] {
+  left: 42%;
+  top: 12%;
+  animation-delay: -6s;
+}
+.task-bg__float[data-i='5'] {
+  left: 55%;
+  top: 78%;
+  animation-delay: -3s;
+}
+.task-bg__float[data-i='6'] {
+  left: 28%;
+  top: 48%;
+  animation-delay: -5s;
+}
+.task-bg__float[data-i='7'] {
+  left: 92%;
+  top: 62%;
+  animation-delay: -7s;
+}
+.task-bg__float[data-i='8'] {
+  left: 12%;
+  top: 88%;
+  animation-delay: -8s;
+}
+.task-bg__float[data-i='9'] {
+  left: 65%;
+  top: 28%;
+  animation-delay: -2.5s;
+}
+.task-bg__float[data-i='10'] {
+  left: 38%;
+  top: 72%;
+  animation-delay: -9s;
+}
+.task-bg__float[data-i='11'] {
+  left: 78%;
+  top: 88%;
+  animation-delay: -4.5s;
+}
+.task-bg__float[data-i='12'] {
+  left: 5%;
+  top: 45%;
+  animation-delay: -6.5s;
+}
+.task-bg__float[data-i='13'] {
+  left: 48%;
+  top: 52%;
+  animation-delay: -1.5s;
+}
+.task-bg__float[data-i='14'] {
+  left: 82%;
+  top: 8%;
+  animation-delay: -10s;
+}
+.task-bg__float[data-i='15'] {
+  left: 22%;
+  top: 32%;
+  animation-delay: -3.5s;
+}
+
+@keyframes task-bg-float {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(12px, -24px) rotate(6deg);
+    opacity: 0.85;
+  }
+}
+
+/* Rising sparks */
+.task-bg__rise {
+  position: absolute;
+  inset: 0;
+}
+
+.task-bg__spark {
+  position: absolute;
+  bottom: -8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(34, 197, 94, 0.9),
+    rgba(52, 211, 153, 0.4)
+  );
+  opacity: 0.5;
+  animation: task-bg-rise linear infinite;
+  animation-duration: 9.5s;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+.task-bg__spark[data-i='0'] {
+  left: 6%;
+  animation-delay: 0s;
+}
+.task-bg__spark[data-i='1'] {
+  left: 11%;
+  animation-delay: -1.2s;
+}
+.task-bg__spark[data-i='2'] {
+  left: 16%;
+  animation-delay: -2.4s;
+}
+.task-bg__spark[data-i='3'] {
+  left: 21%;
+  animation-delay: -0.4s;
+}
+.task-bg__spark[data-i='4'] {
+  left: 26%;
+  animation-delay: -3s;
+}
+.task-bg__spark[data-i='5'] {
+  left: 31%;
+  animation-delay: -1.8s;
+}
+.task-bg__spark[data-i='6'] {
+  left: 36%;
+  animation-delay: -4.2s;
+}
+.task-bg__spark[data-i='7'] {
+  left: 41%;
+  animation-delay: -2.1s;
+}
+.task-bg__spark[data-i='8'] {
+  left: 46%;
+  animation-delay: -0.9s;
+}
+.task-bg__spark[data-i='9'] {
+  left: 51%;
+  animation-delay: -3.6s;
+}
+.task-bg__spark[data-i='10'] {
+  left: 56%;
+  animation-delay: -1.5s;
+}
+.task-bg__spark[data-i='11'] {
+  left: 61%;
+  animation-delay: -4.8s;
+}
+.task-bg__spark[data-i='12'] {
+  left: 66%;
+  animation-delay: -2.7s;
+}
+.task-bg__spark[data-i='13'] {
+  left: 71%;
+  animation-delay: -0.3s;
+}
+.task-bg__spark[data-i='14'] {
+  left: 76%;
+  animation-delay: -3.3s;
+}
+.task-bg__spark[data-i='15'] {
+  left: 81%;
+  animation-delay: -1.1s;
+}
+.task-bg__spark[data-i='16'] {
+  left: 86%;
+  animation-delay: -4.5s;
+}
+.task-bg__spark[data-i='17'] {
+  left: 91%;
+  animation-delay: -2.2s;
+}
+.task-bg__spark[data-i='18'] {
+  left: 9%;
+  animation-delay: -5s;
+}
+.task-bg__spark[data-i='19'] {
+  left: 19%;
+  animation-delay: -1.7s;
+}
+.task-bg__spark[data-i='20'] {
+  left: 29%;
+  animation-delay: -3.9s;
+}
+.task-bg__spark[data-i='21'] {
+  left: 39%;
+  animation-delay: -0.6s;
+}
+.task-bg__spark[data-i='22'] {
+  left: 49%;
+  animation-delay: -4.1s;
+}
+.task-bg__spark[data-i='23'] {
+  left: 59%;
+  animation-delay: -2.8s;
+}
+.task-bg__spark[data-i='24'] {
+  left: 69%;
+  animation-delay: -1.4s;
+}
+.task-bg__spark[data-i='25'] {
+  left: 79%;
+  animation-delay: -3.7s;
+}
+.task-bg__spark[data-i='26'] {
+  left: 89%;
+  animation-delay: -0.8s;
+}
+.task-bg__spark[data-i='27'] {
+  left: 94%;
+  animation-delay: -2.5s;
+}
+
+@keyframes task-bg-rise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-100vh) scale(0.3);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-bg__bloom,
+  .task-bg__orb,
+  .task-bg__mesh,
+  .task-bg__float,
+  .task-bg__spark {
+    animation: none !important;
+  }
+
+  .task-bg__bloom {
+    transform: none;
+  }
+
+  .task-bg__mesh {
+    background-position: 50% 50%;
+  }
+}
