@@ -7,6 +7,13 @@ function todosForColumn(todos, columnId) {
     .sort((a, b) => a.sortOrder - b.sortOrder)
 }
 
+function reorderList(items, fromIndex, toIndex) {
+  const next = [...items]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  return next
+}
+
 export function useTodos() {
   const [columns, setColumns] = useState([])
   const [todos, setTodos] = useState([])
@@ -28,7 +35,10 @@ export function useTodos() {
   const load = useCallback(async () => {
     const data = await fetchJSON('/api/board')
     setColumns(
-      [...(data.columns ?? [])].sort((a, b) => a.id - b.id),
+      [...(data.columns ?? [])].sort(
+        (a, b) =>
+          (a.order ?? a.id) - (b.order ?? b.id) || a.id - b.id,
+      ),
     )
     setTodos(data.todos ?? [])
     setColumnDrafts((prev) => {
@@ -203,48 +213,78 @@ export function useTodos() {
     }
   }
 
-  async function reorder(columnId, fromId, targetIndex) {
-    const columnTodos = todosForColumn(todos, columnId)
-    const fromIndex = columnTodos.findIndex((t) => t.id === fromId)
-    if (fromIndex === -1) return
+  async function handleBoardDragEnd(result) {
+    const { destination, source, draggableId } = result
+    if (!destination) return
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return
+    }
 
-    const next = [...columnTodos]
-    const [moved] = next.splice(fromIndex, 1)
-    const safeTarget = Math.max(0, Math.min(targetIndex, next.length))
-    next.splice(safeTarget, 0, moved)
-    if (safeTarget === fromIndex) return
+    const did = String(draggableId)
+    if (did.startsWith('col-')) {
+      if (destination.droppableId !== 'board-columns') return
+      const nextColumns = reorderList(columns, source.index, destination.index)
+      const nextIds = nextColumns.map((c) => c.id)
+      const previousColumns = columns
 
-    setTodos((prev) => {
-      const others = prev.filter((t) => t.columnId !== columnId)
-      const reindexed = next.map((t, i) => ({ ...t, sortOrder: i }))
-      return [...others, ...reindexed]
-    })
+      setColumns(nextColumns)
+      setActionError(null)
+      try {
+        await fetchJSON('/api/columns/reorder', {
+          method: 'PUT',
+          body: JSON.stringify({ ids: nextIds }),
+        })
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : 'Could not reorder columns.'
+        setColumns(previousColumns)
+        setActionError(message)
+        console.error(e)
+        await load()
+      }
+      return
+    }
+
+    const id = Number(draggableId)
+    const toColumnId = parseColumnDroppableId(destination.droppableId)
+    const toIndex = destination.index
 
     setActionError(null)
     try {
-      await fetchJSON('/api/todos/reorder', {
+      await fetchJSON('/api/todos/move', {
         method: 'PUT',
-        body: JSON.stringify({
-          columnId,
-          ids: next.map((t) => t.id),
-        }),
+        body: JSON.stringify({ id, toColumnId, toIndex }),
       })
+      await load()
     } catch (e) {
       const message =
-        e instanceof Error ? e.message : 'Could not reorder tasks.'
+        e instanceof Error ? e.message : 'Could not move task.'
       setActionError(message)
       console.error(e)
       await load()
     }
   }
 
-  function handleDragEnd(columnId) {
-    return async function (result) {
-      const { source, destination, draggableId } = result
-      if (!destination) return
-      if (source.index === destination.index) return
-      await reorder(columnId, Number(draggableId), destination.index)
+  async function deleteColumn(columnId) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/columns/${columnId}`, { method: 'DELETE' })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not delete column.'
+      setActionError(message)
+      console.error(e)
     }
+  }
+
+  function parseColumnDroppableId(droppableId) {
+    const m = /^column-(\d+)$/.exec(String(droppableId))
+    if (!m) throw new Error('Invalid column')
+    return Number(m[1])
   }
 
   function columnStats(columnId) {
@@ -279,7 +319,9 @@ export function useTodos() {
     remove,
     updateTaskPhoto,
     handleTaskPhotoChange,
-    handleDragEnd,
+    handleBoardDragEnd,
+    deleteColumn,
     columnStats,
   }
 }
+
