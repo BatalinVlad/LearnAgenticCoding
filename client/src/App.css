@@ -1,13 +1,13 @@
 .app {
   position: relative;
   z-index: 1;
-  width: min(100%, 24rem);
-  margin: 0 auto;
-  height: calc(100vh - 1.5rem);
-  height: calc(100dvh - 1.5rem);
+  width: min(100%, 20rem);
+  margin: calc(env(safe-area-inset-top, 0px) + 0.9rem) auto 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - 2.8rem);
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - 2.8rem);
   display: flex;
   flex-direction: column;
-  padding: 1.25rem 1rem 1rem;
+  padding: 0.9rem 0.75rem 0.75rem;
   gap: 0;
   background: rgba(255, 255, 255, 0.52);
   backdrop-filter: blur(20px) saturate(120%);
@@ -20,13 +20,13 @@
 
 .app-header {
   text-align: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.8rem;
   flex-shrink: 0;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(2.25rem, 8vw, 3rem);
+  font-size: clamp(1.7rem, 6vw, 2.2rem);
   font-weight: 800;
   letter-spacing: 0.12em;
   line-height: 1.05;
@@ -42,13 +42,13 @@
 .add {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.7rem;
   flex-shrink: 0;
 }
 
 .add input {
   flex: 1;
-  padding: 0.65rem 0.85rem;
+  padding: 0.5rem 0.7rem;
   border: 1px solid #d4d4d8;
   border-radius: 10px;
   font-size: 1rem;
@@ -62,12 +62,12 @@
 }
 
 .btn-add {
-  padding: 0.65rem 1.15rem;
+  padding: 0.5rem 0.8rem;
   border: none;
   border-radius: 10px;
   background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(22, 163, 74, 0.25), 0 2px 8px rgba(22, 163, 74, 0.2);
@@ -81,6 +81,33 @@
 
 .btn-add:active {
   transform: translateY(1px);
+}
+
+.photo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: -0.3rem 0 0.8rem;
+}
+
+.photo-input {
+  display: none;
+}
+
+.btn-photo,
+.btn-clear-photo {
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #27272a;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.btn-photo:hover,
+.btn-clear-photo:hover {
+  background: #fff;
 }
 
 .list-scroll {
@@ -105,19 +132,31 @@
   list-style: none;
   margin: 0;
   padding: 0 0 0.25rem;
+  border-radius: 12px;
+  transition: background 160ms ease;
+}
+
+.list-over {
+  background: rgba(34, 197, 94, 0.06);
 }
 
 .item {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.7rem 0.85rem;
-  min-height: 3.5rem;
+  gap: 0.45rem;
+  padding: 0.5rem 0.6rem;
+  min-height: 2.8rem;
   background: #fff;
   border: 1px solid #e4e4e7;
   border-radius: 10px;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: grab;
+  transition: transform 170ms ease, box-shadow 170ms ease, opacity 170ms ease;
+}
+
+.item:active {
+  cursor: grabbing;
 }
 
 .item.done .label {
@@ -130,8 +169,8 @@
 .item input[type='checkbox'] {
   flex-shrink: 0;
   display: block;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1rem;
+  height: 1rem;
   margin: 0;
   cursor: pointer;
   accent-color: #16a34a;
@@ -139,21 +178,40 @@
 
 .item .label {
   flex: 1;
-  font-size: 1rem;
+  font-size: 0.88rem;
   line-height: 1.3;
   min-width: 0;
   word-break: break-word;
 }
 
+.task-photo-btn {
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.task-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .btn-remove {
   flex-shrink: 0;
-  min-height: 2.2rem;
-  padding: 0.4rem 0.8rem;
+  min-height: 1.8rem;
+  padding: 0.25rem 0.55rem;
   border: 1px solid #dc2626;
   border-radius: 8px;
   background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
   color: #fff;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
@@ -188,10 +246,34 @@
   flex-shrink: 0;
 }
 
+.task-photo-add {
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #27272a;
+  padding: 0.24rem 0.45rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.task-photo-add:hover {
+  background: #fff;
+}
+
+.item.dragging {
+  opacity: 0.98;
+  transform: scale(1.01) rotate(0.2deg);
+  box-shadow:
+    0 22px 35px rgba(15, 23, 42, 0.30),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  z-index: 6;
+}
+
 .progress-footer {
   flex-shrink: 0;
   margin-top: auto;
-  padding: 0.75rem;
+  padding: 0.55rem;
   border: 1px solid #d4d4d8;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(244, 244, 245, 0) 0%, #f4f4f5 12%);
@@ -206,7 +288,7 @@
 }
 
 .progress-percent {
-  font-size: 1rem;
+  font-size: 0.86rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: #18181b;
@@ -214,7 +296,7 @@
 }
 
 .progress-meta {
-  font-size: 0.85rem;
+  font-size: 0.76rem;
   color: #71717a;
   text-align: right;
 }
@@ -300,4 +382,42 @@
   100% {
     transform: translateY(120vh) rotate(560deg);
   }
+}
+
+.photo-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.photo-viewer__card {
+  width: min(92vw, 360px);
+  background: #fff;
+  border-radius: 16px;
+  padding: 0.75rem;
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.45);
+}
+
+.photo-viewer__img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #f4f4f5;
+  display: block;
+}
+
+.photo-viewer__close {
+  margin-top: 0.6rem;
+  width: 100%;
+  border: 1px solid #d4d4d8;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
 }

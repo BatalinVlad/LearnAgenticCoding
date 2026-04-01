@@ -34,11 +34,12 @@ app.get('/api/todos', (_req, res) => {
 
 app.post('/api/todos', (req, res) => {
   const text = String(req.body.text ?? '').trim();
+  const photo = typeof req.body.photo === 'string' ? req.body.photo : null;
   if (!text) {
     res.status(400).json({ error: 'text is required' });
     return;
   }
-  const item = { id: nextId++, text, done: false };
+  const item = { id: nextId++, text, done: false, photo };
   todos.push(item);
   saveTodos(todos);
   res.status(201).json(item);
@@ -54,6 +55,9 @@ app.patch('/api/todos/:id', (req, res) => {
   if (typeof req.body.done === 'boolean') {
     item.done = req.body.done;
   }
+  if (req.body.photo === null || typeof req.body.photo === 'string') {
+    item.photo = req.body.photo;
+  }
   saveTodos(todos);
   res.json(item);
 });
@@ -68,6 +72,29 @@ app.delete('/api/todos/:id', (req, res) => {
   todos.splice(idx, 1);
   saveTodos(todos);
   res.status(204).end();
+});
+
+app.put('/api/todos/reorder', (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number) : null;
+  if (!ids || ids.some((id) => !Number.isFinite(id))) {
+    res.status(400).json({ error: 'ids array is required' });
+    return;
+  }
+  if (ids.length !== todos.length) {
+    res.status(400).json({ error: 'ids length mismatch' });
+    return;
+  }
+
+  const idSet = new Set(ids);
+  if (idSet.size !== todos.length || todos.some((t) => !idSet.has(t.id))) {
+    res.status(400).json({ error: 'ids must match existing tasks exactly' });
+    return;
+  }
+
+  const byId = new Map(todos.map((t) => [t.id, t]));
+  todos = ids.map((id) => byId.get(id));
+  saveTodos(todos);
+  res.json(todos);
 });
 
 if (fs.existsSync(INDEX_HTML)) {
