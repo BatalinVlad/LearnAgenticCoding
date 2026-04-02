@@ -1,13 +1,47 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import './TaskBackground.css'
 
+function themeToCssVars(theme) {
+  if (!theme || typeof theme.base !== 'string') return undefined
+  return {
+    '--task-bg-base': theme.base,
+    '--task-bg-bloom': theme.bloom,
+    '--task-bg-orb-a': theme.orbA,
+    '--task-bg-orb-b': theme.orbB,
+    '--task-bg-orb-c': theme.orbC,
+    '--task-bg-spark': theme.spark,
+    '--task-bg-spark-glow': theme.sparkGlow,
+    '--task-bg-float-glow': theme.floatGlow,
+  }
+}
+
 /**
- * Decorative animated backdrop — independent of todo state (no props).
- * Wrapped in memo so parent re-renders (checkbox, API) do not restart animations.
+ * Decorative animated backdrop. Optional `backgroundUrl` sets a full-bleed photo
+ * (from Unsplash, etc.) over the gradient; `animatedTheme` overrides palette while
+ * keeping the same motion layers; memo avoids restarting animations.
  */
-function TaskBackground() {
+function TaskBackground({ backgroundUrl, animatedTheme }) {
+  const photoMode = Boolean(backgroundUrl)
+  const style = useMemo(
+    () =>
+      photoMode || !animatedTheme ? undefined : themeToCssVars(animatedTheme),
+    [photoMode, animatedTheme],
+  )
   return (
-    <div className="task-bg" aria-hidden="true">
+    <div
+      className={'task-bg' + (photoMode ? ' task-bg--photo' : '')}
+      style={style}
+      aria-hidden="true"
+    >
+      {photoMode ? (
+        <>
+          <div
+            className="task-bg__photo"
+            style={{ backgroundImage: `url(${backgroundUrl})` }}
+          />
+          <div className="task-bg__photo-dim" />
+        </>
+      ) : null}
       <div className="task-bg__base" />
       <div className="task-bg__bloom" />
       <div className="task-bg__orb task-bg__orb--a" />

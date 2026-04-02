@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { inputAutofillIgnoreProps } from '../../inputAutofillIgnoreProps'
 
 export function Column({
   title,
+  titleInputId,
   onTitleChange,
   onDeleteColumn,
   canDelete,
@@ -52,6 +54,9 @@ export function Column({
       ) : null}
       <div className="board-column__header">
         <input
+          type="text"
+          id={titleInputId}
+          name="column-title"
           className="column-title column-title-input column-title-input--grow"
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -64,6 +69,7 @@ export function Column({
           }}
           aria-label="Column title"
           spellCheck={false}
+          {...inputAutofillIgnoreProps}
         />
         {canDelete ? (
           <button

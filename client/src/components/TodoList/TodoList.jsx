@@ -1,12 +1,14 @@
 import { Draggable, Droppable } from '@hello-pangea/dnd'
-import { Task } from '../Task/Task.jsx'
+import { Card } from '../Card/Card.jsx'
 
 export function TodoList({
   droppableId,
   todos,
+  unfilteredCount,
+  isDragDisabled,
   menuTaskId,
   setMenuTaskId,
-  onToggleDone,
+  onOpenCard,
   onViewPhoto,
   onPhotoChange,
   onRemovePhoto,
@@ -15,7 +17,11 @@ export function TodoList({
   return (
     <>
       {todos.length === 0 ? (
-        <p className="empty empty--in-column">Nothing here yet. Add a task above.</p>
+        <p className="empty empty--in-column">
+          {(unfilteredCount ?? 0) === 0
+            ? 'Nothing here yet. Add a card below.'
+            : 'No cards match this filter.'}
+        </p>
       ) : null}
       <Droppable droppableId={droppableId}>
         {(dropProvided, dropSnapshot) => (
@@ -31,9 +37,10 @@ export function TodoList({
                 key={item.id}
                 draggableId={String(item.id)}
                 index={index}
+                isDragDisabled={isDragDisabled}
               >
                 {(dragProvided, dragSnapshot) => (
-                  <Task
+                  <Card
                     innerRef={dragProvided.innerRef}
                     draggableProps={dragProvided.draggableProps}
                     dragHandleProps={dragProvided.dragHandleProps}
@@ -45,7 +52,10 @@ export function TodoList({
                         prev === item.id ? null : item.id,
                       )
                     }
-                    onToggleDone={onToggleDone}
+                    onOpenCard={(card) => {
+                      onOpenCard(card)
+                      setMenuTaskId(null)
+                    }}
                     onViewPhoto={(photo) => {
                       onViewPhoto(photo)
                       setMenuTaskId(null)

@@ -1,15 +1,24 @@
 import { Column } from '../Column/Column.jsx'
 import { ProgressFooter } from '../ProgressFooter/ProgressFooter.jsx'
+import { inputAutofillIgnoreProps } from '../../inputAutofillIgnoreProps'
 
 export function PlaceholderColumn({ title }) {
   return (
     <Column title={title}>
-      <form className="add add--disabled" onSubmit={(e) => e.preventDefault()}>
+      <form
+        className="add add--disabled"
+        autoComplete="off"
+        data-bwignore="true"
+        onSubmit={(e) => e.preventDefault()}
+      >
         <input
           type="text"
+          id="placeholder-card-input"
+          name="placeholder-card"
           value=""
           placeholder="Enter a title for this card..."
           disabled
+          {...inputAutofillIgnoreProps}
         />
         <button type="button" className="btn-add" disabled>
           Add

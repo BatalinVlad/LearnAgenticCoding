@@ -1,7 +1,8 @@
-require('dotenv').config();
+const path = require('path');
+// Always load .env from this project root (same folder as server.js), not from cwd.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
 
 const PORT = Number(process.env.PORT) || 3000;
 const DATA_FILE = path.join(__dirname, 'todos.json');
@@ -14,6 +15,9 @@ function normalizeBoard(raw) {
       ...t,
       columnId: 1,
       sortOrder: i,
+      description:
+        typeof t.description === 'string' ? t.description : '',
+      checklist: normalizeChecklist(t.checklist),
     }));
     return {
       columns: [{ id: 1, title: 'TO DO', order: 0 }],
@@ -42,17 +46,52 @@ function normalizeBoard(raw) {
     const defaultColId = columns[0].id;
     return {
       columns,
-      todos: raw.todos.map((t, i) => ({
-        ...t,
-        columnId: Number(t.columnId) || defaultColId,
-        sortOrder: typeof t.sortOrder === 'number' ? t.sortOrder : i,
-      })),
+      todos: raw.todos.map((t, i) => {
+        const checklist = normalizeChecklist(t.checklist);
+        return {
+          ...t,
+          columnId: Number(t.columnId) || defaultColId,
+          sortOrder: typeof t.sortOrder === 'number' ? t.sortOrder : i,
+          description:
+            typeof t.description === 'string' ? t.description : '',
+          dueDate: normalizeDueDateField(t.dueDate),
+          checklist,
+        };
+      }),
     };
   }
   return {
     columns: [{ id: 1, title: 'TO DO', order: 0 }],
     todos: [],
   };
+}
+
+/** @returns {string|null} ISO calendar date YYYY-MM-DD or null */
+function normalizeDueDateField(raw) {
+  if (raw == null || raw === '') return null;
+  const s = String(raw).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const parts = s.split('-').map(Number);
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (
+    d.getFullYear() !== parts[0] ||
+    d.getMonth() !== parts[1] - 1 ||
+    d.getDate() !== parts[2]
+  ) {
+    return null;
+  }
+  return s;
+}
+
+function normalizeChecklist(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((c) => ({
+      id: Number(c.id),
+      text: String(c.text ?? '').trim(),
+      done: Boolean(c.done),
+    }))
+    .filter((c) => Number.isFinite(c.id) && c.text.length > 0);
 }
 
 function loadBoard() {
@@ -83,6 +122,18 @@ let nextColumnId =
     ? 1
     : Math.max(...board.columns.map((c) => c.id)) + 1;
 
+function refreshChecklistItemIdCounter() {
+  let max = 0;
+  for (const t of board.todos) {
+    for (const c of t.checklist || []) {
+      if (typeof c.id === 'number' && c.id > max) max = c.id;
+    }
+  }
+  return max + 1;
+}
+
+let nextChecklistItemId = refreshChecklistItemIdCounter();
+
 function sortTodos(list) {
   return [...list].sort((a, b) => {
     if (a.columnId !== b.columnId) return a.columnId - b.columnId;
@@ -110,7 +161,83 @@ board.todos = sortTodos(board.todos);
 ensureColumnOrders();
 
 const app = express();
-app.use(express.json());
+// Default 100kb is too small for base64 photo payloads (client allows up to 700KB files).
+app.use(express.json({ limit: '2mb' }));
+
+function unsplashErrorMessage(status, bodyText) {
+  let parsed = null;
+  try {
+    parsed = JSON.parse(bodyText);
+  } catch {
+    /* use text */
+  }
+  if (parsed && Array.isArray(parsed.errors) && parsed.errors.length) {
+    return parsed.errors.join(' ');
+  }
+  if (parsed && typeof parsed.error === 'string') {
+    return parsed.error;
+  }
+  if (status === 401) {
+    return 'Unsplash rejected the access key. Use the Access Key from unsplash.com/developers (not the Secret), in project-root .env as UNSPLASH_ACCESS_KEY.';
+  }
+  if (status === 403) {
+    return 'Unsplash rate limit or access denied. Wait or check your app status on unsplash.com/developers.';
+  }
+  const snippet = String(bodyText || '').trim().slice(0, 180);
+  return snippet || `Unsplash returned HTTP ${status}.`;
+}
+
+app.get('/api/unsplash/photos', async (req, res) => {
+  const key = process.env.UNSPLASH_ACCESS_KEY;
+  if (!key || !String(key).trim()) {
+    res.status(503).json({
+      error:
+        'Unsplash is not configured. In the project root, create .env with UNSPLASH_ACCESS_KEY=your_access_key (see .env.example). Restart the API after saving.',
+    });
+    return;
+  }
+  try {
+    const query =
+      typeof req.query.query === 'string' ? req.query.query.trim() : '';
+    const params = new URLSearchParams({
+      count: '10',
+      orientation: 'landscape',
+      client_id: String(key).trim(),
+    });
+    if (query) {
+      params.set('query', query);
+    }
+    const url = `https://api.unsplash.com/photos/random?${params.toString()}`;
+    const r = await fetch(url);
+    const bodyText = await r.text();
+    if (!r.ok) {
+      const msg = unsplashErrorMessage(r.status, bodyText);
+      console.error('Unsplash error', r.status, bodyText);
+      res.status(502).json({
+        error: `Unsplash request failed: ${msg}`,
+      });
+      return;
+    }
+    const data = JSON.parse(bodyText);
+    const list = Array.isArray(data) ? data : [data];
+    const photos = list
+      .map((p) => ({
+        id: p.id,
+        fullUrl: p.urls?.regular || p.urls?.full,
+        thumbUrl: p.urls?.small || p.urls?.thumb,
+        photographerName: p.user?.name || 'Photographer',
+        photographerUrl: p.user?.links?.html || 'https://unsplash.com',
+      }))
+      .filter((p) => p.id && p.fullUrl && p.thumbUrl);
+    res.json({ photos });
+  } catch (e) {
+    console.error(e);
+    res.status(502).json({
+      error:
+        'Could not load photos from Unsplash (network error or invalid response).',
+    });
+  }
+});
 
 app.get('/api/board', (_req, res) => {
   res.json({
@@ -299,6 +426,8 @@ app.post('/api/todos', (req, res) => {
     photo,
     columnId,
     sortOrder: maxOrder + 1,
+    dueDate: normalizeDueDateField(req.body.dueDate),
+    checklist: [],
   };
   board.todos.push(item);
   saveBoard(board);
@@ -312,14 +441,88 @@ app.patch('/api/todos/:id', (req, res) => {
     res.status(404).json({ error: 'not found' });
     return;
   }
-  if (typeof req.body.done === 'boolean') {
-    item.done = req.body.done;
+  if (typeof req.body.text === 'string') {
+    const next = String(req.body.text).trim();
+    if (next) {
+      item.text = next;
+    }
   }
   if (req.body.photo === null || typeof req.body.photo === 'string') {
     item.photo = req.body.photo;
   }
+  if (typeof req.body.description === 'string') {
+    item.description = req.body.description;
+  }
+  if (Object.prototype.hasOwnProperty.call(req.body, 'dueDate')) {
+    item.dueDate = normalizeDueDateField(req.body.dueDate);
+  }
   saveBoard(board);
   res.json(item);
+});
+
+app.post('/api/todos/:id/checklist', (req, res) => {
+  const id = Number(req.params.id);
+  const item = board.todos.find((t) => t.id === id);
+  if (!item) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const text = String(req.body.text ?? '').trim();
+  if (!text) {
+    res.status(400).json({ error: 'text is required' });
+    return;
+  }
+  if (!Array.isArray(item.checklist)) {
+    item.checklist = [];
+  }
+  const sub = { id: nextChecklistItemId++, text, done: false };
+  item.checklist.push(sub);
+  saveBoard(board);
+  res.status(201).json(sub);
+});
+
+app.patch('/api/todos/:id/checklist/:itemId', (req, res) => {
+  const id = Number(req.params.id);
+  const checklistItemId = Number(req.params.itemId);
+  const item = board.todos.find((t) => t.id === id);
+  if (!item || !Array.isArray(item.checklist)) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const sub = item.checklist.find((c) => c.id === checklistItemId);
+  if (!sub) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  if (typeof req.body.done === 'boolean') {
+    sub.done = req.body.done;
+  }
+  if (typeof req.body.text === 'string') {
+    const next = String(req.body.text).trim();
+    if (next) {
+      sub.text = next;
+    }
+  }
+  saveBoard(board);
+  res.json(sub);
+});
+
+app.delete('/api/todos/:id/checklist/:itemId', (req, res) => {
+  const id = Number(req.params.id);
+  const checklistItemId = Number(req.params.itemId);
+  const item = board.todos.find((t) => t.id === id);
+  if (!item || !Array.isArray(item.checklist)) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const idx = item.checklist.findIndex((c) => c.id === checklistItemId);
+  if (idx === -1) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  item.checklist.splice(idx, 1);
+  saveBoard(board);
+  res.status(204).end();
 });
 
 app.delete('/api/todos/:id', (req, res) => {
