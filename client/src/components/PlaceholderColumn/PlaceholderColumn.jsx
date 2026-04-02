@@ -1,6 +1,6 @@
 import { Column } from '../Column/Column.jsx'
 import { ProgressFooter } from '../ProgressFooter/ProgressFooter.jsx'
-import { inputAutofillIgnoreProps } from '../../inputAutofillIgnoreProps'
+import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 
 export function PlaceholderColumn({ title }) {
   return (

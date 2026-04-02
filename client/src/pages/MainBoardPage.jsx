@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
-import TaskBackground from '../TaskBackground'
+import TaskBackground from '../components/TaskBackground/TaskBackground'
 import { BackgroundPickerModal } from '../components/BackgroundPickerModal/BackgroundPickerModal'
 import { fetchJSON } from '../api'
 import { useTodos } from '../hooks/useTodos'
@@ -11,8 +11,8 @@ import { TodoList } from '../components/TodoList/TodoList'
 import { PhotoViewer } from '../components/PhotoViewer/PhotoViewer'
 import { ConfirmationModal } from '../components/ConfirmationModal/ConfirmationModal'
 import { CardModal } from '../components/CardModal/CardModal'
-import { inputAutofillIgnoreProps } from '../inputAutofillIgnoreProps'
-import { generateAnimatedBackgroundTheme } from '../generateAnimatedBackgroundTheme'
+import { inputAutofillIgnoreProps } from '../utils/inputAutofillIgnoreProps'
+import { generateAnimatedBackgroundTheme } from '../utils/generateAnimatedBackgroundTheme'
 
 function filterTodosByCardText(todos, query) {
   const q = query.trim().toLowerCase()

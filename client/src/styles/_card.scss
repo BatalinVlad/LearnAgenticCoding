@@ -83,6 +83,28 @@
   animation: fade-in 0.12s ease-out;
 }
 
+/* Must not use global fade-in here: that animation sets transform and overrides
+   translateX(-100%), so the menu flashes to the wrong horizontal side for ~120ms. */
+@keyframes card-menu-dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-100%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-100%) translateY(0);
+  }
+}
+
+/* Escapes column .list-scroll overflow; positioned from trigger via inline top/left */
+.card-menu__dropdown--portal {
+  position: fixed;
+  right: auto;
+  transform: translateX(-100%);
+  z-index: 10000;
+  animation: card-menu-dropdown-fade-in 0.12s ease-out;
+}
+
 .card-menu__option {
   display: flex;
   align-items: center;
@@ -186,6 +208,40 @@
   word-break: break-word;
 }
 
+.card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.card__meta-icon {
+  flex-shrink: 0;
+  color: var(--ds-text-subtle);
+}
+
+.card__meta-item--desc {
+  color: var(--ds-text-subtle);
+}
+
 .card__due {
   font-size: 0.78rem;
   font-weight: 500;
@@ -193,27 +249,34 @@
   line-height: 1.2;
 }
 
+.card__due-text {
+  font-variant-numeric: tabular-nums;
+}
+
 .card__due--today {
   color: #b65c00;
+
+  .card__meta-icon {
+    color: #b65c00;
+  }
 }
 
 .card__due--overdue {
   color: var(--danger-color);
   font-weight: 600;
-}
 
-.card__hint {
-  font-size: 0.78rem;
-  color: var(--ds-text-subtle);
+  .card__meta-icon {
+    color: var(--danger-color);
+  }
 }
 
 .card__progress {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: auto;
-  align-self: flex-end;
-  max-width: 30%;
+  margin-left: auto;
+  flex-shrink: 0;
+  max-width: 42%;
 }
 
 .card__progress-icon {

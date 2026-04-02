@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ProgressFooter } from '../ProgressFooter/ProgressFooter'
 import { checklistStats } from '../../hooks/useTodos'
-import { inputAutofillIgnoreProps } from '../../inputAutofillIgnoreProps'
-import { toDateInputValue } from '../../dueDateUtils'
+import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
+import { toDateInputValue } from '../../utils/dueDateUtils'
 
 export function CardModal({
   card,

@@ -1,12 +1,13 @@
 const path = require('path');
-// Always load .env from this project root (same folder as server.js), not from cwd.
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+// Load .env from project root (parent of server/), not from cwd.
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const express = require('express');
 const fs = require('fs');
 
+const ROOT = path.join(__dirname, '..');
 const PORT = Number(process.env.PORT) || 3000;
-const DATA_FILE = path.join(__dirname, 'todos.json');
-const CLIENT_DIST = path.join(__dirname, 'client', 'dist');
+const DATA_FILE = path.join(ROOT, 'todos.json');
+const CLIENT_DIST = path.join(ROOT, 'client', 'dist');
 const INDEX_HTML = path.join(CLIENT_DIST, 'index.html');
 
 function normalizeBoard(raw) {

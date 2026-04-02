@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { inputAutofillIgnoreProps } from '../../inputAutofillIgnoreProps'
+import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 
 export function Column({
   title,
