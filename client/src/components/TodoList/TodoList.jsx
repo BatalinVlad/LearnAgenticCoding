@@ -1,12 +1,11 @@
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
+import { Draggable, Droppable } from '@hello-pangea/dnd'
 import { Task } from '../Task/Task.jsx'
 
 export function TodoList({
-  columnId,
+  droppableId,
   todos,
   menuTaskId,
   setMenuTaskId,
-  onDragEnd,
   onToggleDone,
   onViewPhoto,
   onPhotoChange,
@@ -14,8 +13,11 @@ export function TodoList({
   onDelete,
 }) {
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId={`todo-list-${columnId}`}>
+    <>
+      {todos.length === 0 ? (
+        <p className="empty empty--in-column">Nothing here yet. Add a task above.</p>
+      ) : null}
+      <Droppable droppableId={droppableId}>
         {(dropProvided, dropSnapshot) => (
           <ul
             className={
@@ -68,6 +70,6 @@ export function TodoList({
           </ul>
         )}
       </Droppable>
-    </DragDropContext>
+    </>
   )
 }

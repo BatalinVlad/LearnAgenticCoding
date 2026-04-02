@@ -14,19 +14,73 @@ function reorderList(items, fromIndex, toIndex) {
   return next
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value))
+}
+
+function applyOptimisticTodoMove(
+  todos,
+  { id, fromColumnId, toColumnId, toIndex },
+) {
+  const nextTodos = todos.map((todo) => ({ ...todo }))
+  const sourceList = todosForColumn(nextTodos, fromColumnId)
+  const sourceIndex = sourceList.findIndex((todo) => todo.id === id)
+  if (sourceIndex === -1) return todos
+
+  const [moved] = sourceList.splice(sourceIndex, 1)
+  moved.columnId = toColumnId
+
+  const targetList =
+    fromColumnId === toColumnId
+      ? sourceList
+      : todosForColumn(nextTodos, toColumnId)
+
+  const safeIndex = clamp(toIndex, 0, targetList.length)
+  targetList.splice(safeIndex, 0, moved)
+
+  sourceList.forEach((todo, index) => {
+    todo.sortOrder = index
+  })
+
+  if (fromColumnId !== toColumnId) {
+    targetList.forEach((todo, index) => {
+      todo.sortOrder = index
+    })
+  }
+
+  return nextTodos
+}
+
+export function checklistStats(checklist) {
+  const list = Array.isArray(checklist) ? checklist : []
+  const total = list.length
+  const doneCount = list.filter((c) => c.done).length
+  const percent =
+    total === 0 ? 0 : Math.round((doneCount / total) * 100)
+  return { total, doneCount, percent }
+}
+
 export function useTodos() {
   const [columns, setColumns] = useState([])
   const [todos, setTodos] = useState([])
   const [columnDrafts, setColumnDrafts] = useState({})
   const [loadError, setLoadError] = useState(null)
   const [actionError, setActionError] = useState(null)
+  /** Photo upload validation/read errors; shown in card modal for `taskId`. */
+  const [photoError, setPhotoError] = useState(null)
   const [viewerPhoto, setViewerPhoto] = useState(null)
   const [menuTaskId, setMenuTaskId] = useState(null)
 
   const { total, doneCount, percent } = useMemo(() => {
-    const total = todos.length
-    const doneCount = todos.filter((t) => t.done).length
-    const percent = total === 0 ? 0 : Math.round((doneCount / total) * 100)
+    let total = 0
+    let doneCount = 0
+    for (const t of todos) {
+      const ch = Array.isArray(t.checklist) ? t.checklist : []
+      total += ch.length
+      doneCount += ch.filter((c) => c.done).length
+    }
+    const percent =
+      total === 0 ? 0 : Math.round((doneCount / total) * 100)
     return { total, doneCount, percent }
   }, [todos])
 
@@ -73,7 +127,7 @@ export function useTodos() {
 
   useEffect(() => {
     function handleOutsidePointer(e) {
-      if (!e.target.closest('[data-task-actions]')) {
+      if (!e.target.closest('[data-card-menu]')) {
         setMenuTaskId(null)
       }
     }
@@ -143,10 +197,78 @@ export function useTodos() {
     }
   }
 
-  async function toggleDone(id, done) {
+  async function updateCardTitle(id, title) {
+    const t = title.trim()
+    if (!t) return
     setActionError(null)
     try {
       await fetchJSON(`/api/todos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ text: t }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not update card.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
+  async function updateCardDescription(id, description) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ description: String(description ?? '') }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not update description.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
+  async function updateCardDueDate(id, dueDate) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ dueDate: dueDate === null ? null : dueDate }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not update due date.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
+  async function addChecklistItem(cardId, text) {
+    const t = text.trim()
+    if (!t) return
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${cardId}/checklist`, {
+        method: 'POST',
+        body: JSON.stringify({ text: t }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not add item.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
+  async function toggleChecklistItem(cardId, itemId, done) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${cardId}/checklist/${itemId}`, {
         method: 'PATCH',
         body: JSON.stringify({ done }),
       })
@@ -154,6 +276,39 @@ export function useTodos() {
     } catch (e) {
       const message =
         e instanceof Error ? e.message : 'Something went wrong. Try again.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
+  async function updateChecklistItemText(cardId, itemId, text) {
+    const t = text.trim()
+    if (!t) return
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${cardId}/checklist/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ text: t }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not update item.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
+  async function removeChecklistItem(cardId, itemId) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${cardId}/checklist/${itemId}`, {
+        method: 'DELETE',
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not remove item.'
       setActionError(message)
       console.error(e)
     }
@@ -180,6 +335,10 @@ export function useTodos() {
     await load()
   }
 
+  const clearPhotoError = useCallback(() => {
+    setPhotoError(null)
+  }, [])
+
   async function handleTaskPhotoChange(id, e) {
     const file = e.target.files?.[0]
     if (!file) {
@@ -187,28 +346,44 @@ export function useTodos() {
       return
     }
     if (!file.type.startsWith('image/')) {
-      setActionError('Please choose an image file.')
+      setPhotoError({ taskId: id, message: 'Please choose an image file.' })
       e.target.value = ''
       return
     }
     if (file.size > 700 * 1024) {
-      setActionError('Image is too large. Use up to 700KB.')
+      setPhotoError({
+        taskId: id,
+        message: 'Image is too large. Use up to 700KB.',
+      })
       e.target.value = ''
       return
     }
+    let dataUrl
     try {
-      const dataUrl = await new Promise((resolve, reject) => {
+      dataUrl = await new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => resolve(String(reader.result))
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
-      setActionError(null)
+    } catch (e2) {
+      setPhotoError({ taskId: id, message: 'Could not read image file.' })
+      console.error(e2)
+      e.target.value = ''
+      return
+    }
+
+    setPhotoError(null)
+    try {
       await updateTaskPhoto(id, dataUrl)
       e.target.value = ''
-    } catch (e2) {
-      setActionError('Could not read image file.')
-      console.error(e2)
+    } catch (e3) {
+      const message =
+        e3 instanceof Error
+          ? e3.message
+          : 'Could not save photo. Try again.'
+      setPhotoError({ taskId: id, message })
+      console.error(e3)
       e.target.value = ''
     }
   }
@@ -249,19 +424,29 @@ export function useTodos() {
     }
 
     const id = Number(draggableId)
+    const fromColumnId = parseColumnDroppableId(source.droppableId)
     const toColumnId = parseColumnDroppableId(destination.droppableId)
     const toIndex = destination.index
 
+    const previousTodos = todos
+    const optimisticTodos = applyOptimisticTodoMove(todos, {
+      id,
+      fromColumnId,
+      toColumnId,
+      toIndex,
+    })
+
+    setTodos(optimisticTodos)
     setActionError(null)
     try {
       await fetchJSON('/api/todos/move', {
         method: 'PUT',
         body: JSON.stringify({ id, toColumnId, toIndex }),
       })
-      await load()
     } catch (e) {
       const message =
         e instanceof Error ? e.message : 'Could not move task.'
+      setTodos(previousTodos)
       setActionError(message)
       console.error(e)
       await load()
@@ -287,15 +472,6 @@ export function useTodos() {
     return Number(m[1])
   }
 
-  function columnStats(columnId) {
-    const list = todosForColumn(todos, columnId)
-    const total = list.length
-    const doneCount = list.filter((t) => t.done).length
-    const percent =
-      total === 0 ? 0 : Math.round((doneCount / total) * 100)
-    return { total, doneCount, percent }
-  }
-
   return {
     columns,
     todos,
@@ -303,6 +479,8 @@ export function useTodos() {
     setColumnDraft: setDraft,
     loadError,
     actionError,
+    photoError,
+    clearPhotoError,
     viewerPhoto,
     setViewerPhoto,
     menuTaskId,
@@ -315,13 +493,18 @@ export function useTodos() {
     handleSubmit,
     addColumn,
     updateColumnTitle,
-    toggleDone,
+    updateCardTitle,
+    updateCardDescription,
+    updateCardDueDate,
+    addChecklistItem,
+    toggleChecklistItem,
+    updateChecklistItemText,
+    removeChecklistItem,
     remove,
     updateTaskPhoto,
     handleTaskPhotoChange,
     handleBoardDragEnd,
     deleteColumn,
-    columnStats,
   }
 }
 

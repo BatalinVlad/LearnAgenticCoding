@@ -16,7 +16,7 @@ function normalizeBoard(raw) {
       sortOrder: i,
     }));
     return {
-      columns: [{ id: 1, title: 'TO DO' }],
+      columns: [{ id: 1, title: 'TO DO', order: 0 }],
       todos,
     };
   }
@@ -24,9 +24,20 @@ function normalizeBoard(raw) {
     let columns = raw.columns.map((c) => ({
       id: Number(c.id),
       title: String(c.title ?? 'Column'),
+      order: typeof c.order === 'number' ? c.order : null,
     }));
     if (columns.length === 0) {
-      columns = [{ id: 1, title: 'TO DO' }];
+      columns = [{ id: 1, title: 'TO DO', order: 0 }];
+    } else {
+      const allHaveOrder = columns.every((c) => c.order !== null);
+      if (allHaveOrder) {
+        columns.sort((a, b) => a.order - b.order || a.id - b.id);
+      } else {
+        columns.sort((a, b) => a.id - b.id);
+      }
+      columns.forEach((c, i) => {
+        c.order = i;
+      });
     }
     const defaultColId = columns[0].id;
     return {
@@ -39,7 +50,7 @@ function normalizeBoard(raw) {
     };
   }
   return {
-    columns: [{ id: 1, title: 'TO DO' }],
+    columns: [{ id: 1, title: 'TO DO', order: 0 }],
     todos: [],
   };
 }
@@ -54,7 +65,7 @@ function loadBoard() {
     }
     return normalizeBoard(raw);
   } catch {
-    return { columns: [{ id: 1, title: 'TO DO' }], todos: [] };
+    return { columns: [{ id: 1, title: 'TO DO', order: 0 }], todos: [] };
   }
 }
 
@@ -79,14 +90,31 @@ function sortTodos(list) {
   });
 }
 
+function sortColumns(cols) {
+  return [...cols].sort((a, b) => {
+    const oa = typeof a.order === 'number' ? a.order : a.id;
+    const ob = typeof b.order === 'number' ? b.order : b.id;
+    if (oa !== ob) return oa - ob;
+    return a.id - b.id;
+  });
+}
+
+function ensureColumnOrders() {
+  board.columns = sortColumns(board.columns);
+  board.columns.forEach((c, i) => {
+    c.order = i;
+  });
+}
+
 board.todos = sortTodos(board.todos);
+ensureColumnOrders();
 
 const app = express();
 app.use(express.json());
 
 app.get('/api/board', (_req, res) => {
   res.json({
-    columns: [...board.columns].sort((a, b) => a.id - b.id),
+    columns: sortColumns(board.columns),
     todos: sortTodos(board.todos),
   });
 });
@@ -97,10 +125,35 @@ app.post('/api/columns', (req, res) => {
     typeof req.body.title === 'string' && req.body.title.trim()
       ? req.body.title.trim()
       : `COLUMN ${n}`;
-  const col = { id: nextColumnId++, title };
+  const order =
+    board.columns.length === 0
+      ? 0
+      : Math.max(...board.columns.map((c) => (typeof c.order === 'number' ? c.order : 0))) + 1;
+  const col = { id: nextColumnId++, title, order };
   board.columns.push(col);
+  ensureColumnOrders();
   saveBoard(board);
   res.status(201).json(col);
+});
+
+app.put('/api/columns/reorder', (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number) : null;
+  if (!ids || ids.length !== board.columns.length) {
+    res.status(400).json({ error: 'ids must list every column once' });
+    return;
+  }
+  const idSet = new Set(ids);
+  if (idSet.size !== ids.length || board.columns.some((c) => !idSet.has(c.id))) {
+    res.status(400).json({ error: 'invalid ids' });
+    return;
+  }
+  ids.forEach((id, i) => {
+    const c = board.columns.find((x) => x.id === id);
+    if (c) c.order = i;
+  });
+  board.columns = sortColumns(board.columns);
+  saveBoard(board);
+  res.json(sortColumns(board.columns));
 });
 
 app.patch('/api/columns/:id', (req, res) => {
@@ -118,6 +171,108 @@ app.patch('/api/columns/:id', (req, res) => {
   col.title = title;
   saveBoard(board);
   res.json(col);
+});
+
+app.delete('/api/columns/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (board.columns.length <= 1) {
+    res.status(400).json({ error: 'cannot delete the last column' });
+    return;
+  }
+  const idx = board.columns.findIndex((c) => c.id === id);
+  if (idx === -1) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const others = board.columns.filter((c) => c.id !== id);
+  const fallbackId = [...others].sort((a, b) => a.id - b.id)[0].id;
+
+  board.todos.forEach((t) => {
+    if (t.columnId === id) {
+      t.columnId = fallbackId;
+    }
+  });
+
+  function reindexColumn(columnId) {
+    const list = board.todos
+      .filter((t) => t.columnId === columnId)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    list.forEach((t, i) => {
+      t.sortOrder = i;
+    });
+  }
+  reindexColumn(fallbackId);
+
+  board.columns.splice(idx, 1);
+  ensureColumnOrders();
+  saveBoard(board);
+  res.json({ columns: sortColumns(board.columns), todos: sortTodos(board.todos) });
+});
+
+app.put('/api/todos/move', (req, res) => {
+  const id = Number(req.body.id);
+  const toColumnId = Number(req.body.toColumnId);
+  const toIndex = Number(req.body.toIndex);
+  if (
+    !Number.isFinite(id) ||
+    !Number.isFinite(toColumnId) ||
+    !Number.isFinite(toIndex) ||
+    toIndex < 0
+  ) {
+    res.status(400).json({ error: 'id, toColumnId, and toIndex are required' });
+    return;
+  }
+  if (!board.columns.some((c) => c.id === toColumnId)) {
+    res.status(400).json({ error: 'invalid column' });
+    return;
+  }
+  const t = board.todos.find((x) => x.id === id);
+  if (!t) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const fromColumnId = t.columnId;
+
+  if (fromColumnId === toColumnId) {
+    const colTodos = board.todos
+      .filter((x) => x.columnId === fromColumnId)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    const fromIdx = colTodos.findIndex((x) => x.id === id);
+    if (fromIdx === -1) {
+      res.status(400).json({ error: 'bad state' });
+      return;
+    }
+    const next = [...colTodos];
+    const [moved] = next.splice(fromIdx, 1);
+    const safeIdx = Math.min(Math.max(0, toIndex), next.length);
+    next.splice(safeIdx, 0, moved);
+    next.forEach((item, i) => {
+      const it = board.todos.find((x) => x.id === item.id);
+      if (it) it.sortOrder = i;
+    });
+  } else {
+    const sourceTodos = board.todos
+      .filter((x) => x.columnId === fromColumnId && x.id !== id)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    const destTodos = board.todos
+      .filter((x) => x.columnId === toColumnId && x.id !== id)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    const safeIdx = Math.min(Math.max(0, toIndex), destTodos.length);
+    t.columnId = toColumnId;
+    destTodos.splice(safeIdx, 0, t);
+    sourceTodos.forEach((item, i) => {
+      const it = board.todos.find((x) => x.id === item.id);
+      if (it) it.sortOrder = i;
+    });
+    destTodos.forEach((item, i) => {
+      const it = board.todos.find((x) => x.id === item.id);
+      if (it) it.sortOrder = i;
+    });
+  }
+
+  board.todos = sortTodos(board.todos);
+  saveBoard(board);
+  res.json(board.todos);
 });
 
 app.post('/api/todos', (req, res) => {

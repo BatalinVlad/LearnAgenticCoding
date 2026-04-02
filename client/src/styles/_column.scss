@@ -1,14 +1,84 @@
 .board-column {
+  position: relative;
   width: var(--column-width);
   min-width: var(--column-width);
   flex: 0 0 var(--column-width);
   border-radius: 12px;
   background: var(--ds-surface);
-  padding: 14px;
+  padding: 24px 14px 14px;
   max-height: 100%;
   display: flex;
   flex-direction: column;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.column-drag-handle {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--ds-text-subtle);
+  background: rgba(9, 30, 66, 0.08);
+  border-radius: 4px;
+  opacity: 0.8;
+  cursor: grab;
+  padding: 0 10px;
+  margin: 0;
+  width: fit-content;
+  height: 8px;
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(9, 30, 66, 0.12);
+    color: var(--ds-text);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.board-column__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.board-column--dragging {
+  opacity: 0.92;
+  box-shadow: 0 12px 28px rgba(9, 30, 66, 0.2);
+}
+
+.column-delete-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ds-text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(220, 38, 38, 0.12);
+    color: var(--danger-color);
+  }
 }
 
 .column-title {
@@ -34,6 +104,12 @@
     border-color 0.2s ease,
     background 0.2s ease;
 
+  &--grow {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 12px;
+  }
+
   &:hover {
     background: rgba(9, 30, 66, 0.04);
   }
@@ -45,19 +121,25 @@
   }
 }
 
+.empty--in-column {
+  padding: 12px 8px 8px;
+  margin: 0;
+  font-size: 0.88rem;
+}
+
 .add {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 12px;
   position: relative;
 
   input {
     flex: 1;
     min-width: 0;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 2px solid transparent;
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     background: #ffffff;
     color: var(--ds-text);
     box-shadow: 0 1px 1px rgba(9, 30, 66, 0.15);
@@ -78,12 +160,12 @@
 }
 
 .btn-add {
-  padding: 0 16px;
+  padding: 0 14px;
   border: none;
   border-radius: 6px;
   background: var(--primary-color);
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -146,6 +228,7 @@
 
 .add-column-btn {
   height: fit-content;
+  flex-shrink: 0;
   min-width: var(--column-width);
   border: none;
   border-radius: 12px;
