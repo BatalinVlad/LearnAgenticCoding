@@ -9,6 +9,22 @@ const PORT = Number(process.env.PORT) || 3000;
 const DATA_FILE = path.join(ROOT, 'todos.json');
 const CLIENT_DIST = path.join(ROOT, 'client', 'dist');
 const INDEX_HTML = path.join(CLIENT_DIST, 'index.html');
+const DUMMY_UNSPLASH_PATH = path.join(
+  ROOT,
+  'client',
+  'src',
+  'data',
+  'dummyUnsplashBackgrounds.json',
+);
+
+function readDummyUnsplashBackgrounds() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(DUMMY_UNSPLASH_PATH, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 function normalizeBoard(raw) {
   if (Array.isArray(raw)) {
@@ -165,6 +181,15 @@ const app = express();
 // Default 100kb is too small for base64 photo payloads (client allows up to 700KB files).
 app.use(express.json({ limit: '2mb' }));
 
+function firstUrlFromSizes(urls, keys) {
+  if (!urls || typeof urls !== 'object') return undefined;
+  for (const k of keys) {
+    const v = urls[k];
+    if (typeof v === 'string' && v.trim().length > 0) return v.trim();
+  }
+  return undefined;
+}
+
 function unsplashErrorMessage(status, bodyText) {
   let parsed = null;
   try {
@@ -188,7 +213,41 @@ function unsplashErrorMessage(status, bodyText) {
   return snippet || `Unsplash returned HTTP ${status}.`;
 }
 
+const UNSPLASH_PHOTO_FIELDS = [
+  'regular',
+  'full',
+  'raw',
+  'small',
+  'thumb',
+];
+
+function mapUnsplashApiPhotoToClient(p) {
+  if (!p || !p.urls) return null;
+  const u = p.urls;
+  const fullUrl = firstUrlFromSizes(u, UNSPLASH_PHOTO_FIELDS);
+  const thumbUrl =
+    firstUrlFromSizes(u, ['thumb', 'small', 'regular', 'full', 'raw']) ||
+    fullUrl;
+  if (!p.id || !fullUrl) return null;
+  return {
+    id: p.id,
+    fullUrl,
+    thumbUrl,
+    photographerName: p.user?.name || 'Photographer',
+    photographerUrl: p.user?.links?.html || 'https://unsplash.com',
+    photoPageUrl: typeof p.links?.html === 'string' ? p.links.html : undefined,
+  };
+}
+
 app.get('/api/unsplash/photos', async (req, res) => {
+  const query =
+    typeof req.query.query === 'string' ? req.query.query.trim() : '';
+
+  if (!query) {
+    res.json({ photos: readDummyUnsplashBackgrounds() });
+    return;
+  }
+
   const key = process.env.UNSPLASH_ACCESS_KEY;
   if (!key || !String(key).trim()) {
     res.status(503).json({
@@ -198,17 +257,13 @@ app.get('/api/unsplash/photos', async (req, res) => {
     return;
   }
   try {
-    const query =
-      typeof req.query.query === 'string' ? req.query.query.trim() : '';
     const params = new URLSearchParams({
-      count: '10',
+      query,
+      per_page: '12',
       orientation: 'landscape',
       client_id: String(key).trim(),
     });
-    if (query) {
-      params.set('query', query);
-    }
-    const url = `https://api.unsplash.com/photos/random?${params.toString()}`;
+    const url = `https://api.unsplash.com/search/photos?${params.toString()}`;
     const r = await fetch(url);
     const bodyText = await r.text();
     if (!r.ok) {
@@ -220,16 +275,8 @@ app.get('/api/unsplash/photos', async (req, res) => {
       return;
     }
     const data = JSON.parse(bodyText);
-    const list = Array.isArray(data) ? data : [data];
-    const photos = list
-      .map((p) => ({
-        id: p.id,
-        fullUrl: p.urls?.regular || p.urls?.full,
-        thumbUrl: p.urls?.small || p.urls?.thumb,
-        photographerName: p.user?.name || 'Photographer',
-        photographerUrl: p.user?.links?.html || 'https://unsplash.com',
-      }))
-      .filter((p) => p.id && p.fullUrl && p.thumbUrl);
+    const list = Array.isArray(data.results) ? data.results : [];
+    const photos = list.map(mapUnsplashApiPhotoToClient).filter(Boolean);
     res.json({ photos });
   } catch (e) {
     console.error(e);

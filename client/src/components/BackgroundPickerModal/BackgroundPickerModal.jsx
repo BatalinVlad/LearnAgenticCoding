@@ -109,7 +109,19 @@ export function BackgroundPickerModal({
                     onClick={() => onSelectPhoto(p)}
                     title="Use this image"
                   >
-                    <img src={p.thumbUrl} alt="" loading="lazy" />
+                    <img
+                      className="bg-picker__thumb-img"
+                      src={p.thumbUrl || p.fullUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        const el = e.currentTarget
+                        if (el.dataset.fallback === '1' || !p.fullUrl) return
+                        el.dataset.fallback = '1'
+                        el.src = p.fullUrl
+                      }}
+                    />
                   </button>
                 </li>
               ))}

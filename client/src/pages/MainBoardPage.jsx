@@ -379,7 +379,7 @@ export default function MainBoardPage() {
           setBackgroundUrl(photo.fullUrl)
           setBackgroundCredit({
             name: photo.photographerName,
-            url: photo.photographerUrl,
+            url: photo.photoPageUrl || photo.photographerUrl,
           })
           setBgPickerOpen(false)
         }}

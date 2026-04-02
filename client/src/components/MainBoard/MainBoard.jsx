@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
+import { UserNav } from '../UserNav/UserNav'
+
+const DUMMY_BOARD_MEMBERS = [
+  { id: 1, username: 'vbatalin', name: 'Vlad Batalin', initials: 'VB', password: 'password', tasks: ['task-1', 'task-2'] },
+  { id: 2, username: 'johndoe', name: 'John Doe', initials: 'JD', password: 'password', tasks: ['task-3'] },
+  { id: 3, username: 'sarahsmith', name: 'Sarah Smith', initials: 'SS', password: 'password', tasks: [] },
+]
 
 export function MainBoard({
   title,
@@ -45,6 +52,20 @@ export function MainBoard({
             {...inputAutofillIgnoreProps}
           />
         </div>
+        
+        <div className="board-users">
+          {DUMMY_BOARD_MEMBERS.map(user => (
+            <div 
+              key={user.id} 
+              className="board-users__avatar" 
+              title={`${user.name} (@${user.username})`}
+              style={{ backgroundColor: `hsl(${(user.id * 137.5) % 360}, 70%, 50%)` }}
+            >
+              {user.initials}
+            </div>
+          ))}
+        </div>
+
         <div className="app-header__actions">
           <button
             type="button"
@@ -68,6 +89,7 @@ export function MainBoard({
             spellCheck={false}
             {...inputAutofillIgnoreProps}
           />
+          <UserNav />
         </div>
       </header>
       <section className="main-board">{children}</section>

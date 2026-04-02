@@ -26,6 +26,40 @@
   min-width: 0;
 }
 
+.board-users {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.board-users__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  margin-left: -8px;
+  cursor: pointer;
+  transition: transform 0.2s, z-index 0.2s;
+  position: relative;
+  
+  &:first-child {
+    margin-left: 0;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    z-index: 10;
+  }
+}
+
 .board-title-input {
   display: block;
   width: 100%;
