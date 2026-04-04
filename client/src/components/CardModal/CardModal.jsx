@@ -6,6 +6,7 @@ import { ConfettiCelebration } from '../ConfettiCelebration/ConfettiCelebration'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 import { toDateInputValue } from '../../utils/dueDateUtils'
 import { CardLabelSwatches } from '../CardLabelSwatches/CardLabelSwatches'
+import { CardAssigneeSelect } from '../CardAssigneeSelect/CardAssigneeSelect'
 import { isValidCardLabelId } from '../../constants/cardLabels'
 
 export function CardModal({
@@ -15,6 +16,7 @@ export function CardModal({
   onUpdateTitle,
   onUpdateDescription,
   onUpdateCardLabel,
+  onUpdateCardAssignee,
   onUpdateDueDate,
   onAddChecklistItem,
   onToggleChecklistItem,
@@ -190,6 +192,13 @@ export function CardModal({
               onSelect={(id) => onUpdateCardLabel(card.id, id)}
             />
           </div>
+
+          <CardAssigneeSelect
+            value={card.assigneeId}
+            onChange={(id) => onUpdateCardAssignee(card.id, id)}
+            idPrefix={`card-modal-assignee-${card.id}`}
+            className="card-modal__assignee-section"
+          />
 
           <label className="card-modal__label" htmlFor="card-description-input">
             Description

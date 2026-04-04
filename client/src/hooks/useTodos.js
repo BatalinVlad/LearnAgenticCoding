@@ -246,6 +246,22 @@ export function useTodos() {
     }
   }
 
+  async function updateCardAssignee(id, assigneeId) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ assigneeId }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not update assignee.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
   async function updateCardDueDate(id, dueDate) {
     setActionError(null)
     try {
@@ -528,6 +544,7 @@ export function useTodos() {
     updateCardTitle,
     updateCardDescription,
     updateCardLabel,
+    updateCardAssignee,
     updateCardDueDate,
     addChecklistItem,
     toggleChecklistItem,

@@ -19,6 +19,26 @@ function filterTodosByCardText(todos, query) {
   return todos.filter((t) => (t.text || '').toLowerCase().includes(q))
 }
 
+/** @param {string} assigneeFilter '' | 'unassigned' | member id string */
+function filterTodosByAssignee(todos, assigneeFilter) {
+  if (!assigneeFilter) return todos
+  if (assigneeFilter === 'unassigned') {
+    return todos.filter((t) => {
+      const id = t.assigneeId
+      return id == null || id === '' || !Number.isFinite(Number(id))
+    })
+  }
+  const wantId = Number(assigneeFilter)
+  if (!Number.isFinite(wantId)) return todos
+  return todos.filter((t) => Number(t.assigneeId) === wantId)
+}
+
+function filterTodosForBoard(todos, textQuery, assigneeFilter) {
+  let list = filterTodosByCardText(todos, textQuery)
+  list = filterTodosByAssignee(list, assigneeFilter)
+  return list
+}
+
 const BOARD_BG_STORAGE_KEY = 'mainboard-background-v2'
 const BOARD_BG_LEGACY_KEY = 'mainboard-background-url'
 const DEFAULT_COMPANY_BG = {
@@ -89,6 +109,7 @@ export default function MainBoardPage() {
   const [openCardId, setOpenCardId] = useState(null)
   const [boardTitle, setBoardTitle] = useState('QUALITY CONTROL WORKFLOW')
   const [cardFilter, setCardFilter] = useState('')
+  const [assigneeFilter, setAssigneeFilter] = useState('')
   const [backgroundUrl, setBackgroundUrl] = useState(
     () => readStoredBackground().url,
   )
@@ -183,6 +204,7 @@ export default function MainBoardPage() {
     updateCardTitle,
     updateCardDescription,
     updateCardLabel,
+    updateCardAssignee,
     updateCardDueDate,
     addChecklistItem,
     toggleChecklistItem,
@@ -244,6 +266,8 @@ export default function MainBoardPage() {
           onTitleChange={setBoardTitle}
           cardFilter={cardFilter}
           onCardFilterChange={setCardFilter}
+          assigneeFilter={assigneeFilter}
+          onAssigneeFilterChange={setAssigneeFilter}
           onOpenBackgroundPicker={openBackgroundPicker}
         >
           <DragDropContext onDragEnd={handleBoardDragEnd}>
@@ -261,7 +285,11 @@ export default function MainBoardPage() {
                 >
                   {columns.map((col, colIndex) => {
                     const fullList = todosForColumn(col.id)
-                    const list = filterTodosByCardText(fullList, cardFilter)
+                    const list = filterTodosForBoard(
+                      fullList,
+                      cardFilter,
+                      assigneeFilter,
+                    )
                     const droppableId = `column-${col.id}`
 
                     return (
@@ -307,7 +335,10 @@ export default function MainBoardPage() {
                                     droppableId={droppableId}
                                     todos={list}
                                     unfilteredCount={fullList.length}
-                                    isDragDisabled={cardFilter.trim().length > 0}
+                                    isDragDisabled={
+                                      cardFilter.trim().length > 0 ||
+                                      assigneeFilter.length > 0
+                                    }
                                     menuTaskId={menuTaskId}
                                     setMenuTaskId={setMenuTaskId}
                                     photoLoadingId={photoLoadingId}
@@ -330,6 +361,7 @@ export default function MainBoardPage() {
                                       setMenuTaskId(null)
                                     }}
                                     onUpdateCardLabel={updateCardLabel}
+                                    onUpdateCardAssignee={updateCardAssignee}
                                     onDelete={remove}
                                   />
                                 )}
@@ -431,6 +463,7 @@ export default function MainBoardPage() {
           onUpdateTitle={updateCardTitle}
           onUpdateDescription={updateCardDescription}
           onUpdateCardLabel={updateCardLabel}
+          onUpdateCardAssignee={updateCardAssignee}
           onUpdateDueDate={updateCardDueDate}
           onAddChecklistItem={addChecklistItem}
           onToggleChecklistItem={toggleChecklistItem}

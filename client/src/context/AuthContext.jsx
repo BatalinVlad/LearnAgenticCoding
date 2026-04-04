@@ -2,75 +2,175 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
 import {
-  BOARD_MEMBERS,
-  findMemberByCredentials,
-  findMemberById,
-  toPublicUser,
-} from '../data/boardUsers'
+  authLogin,
+  authLogout,
+  authRegister,
+  fetchAuthMe,
+  fetchAuthMembers,
+} from '../api/auth'
 
-const STORAGE_KEY = 'board-auth-user-id'
+const TOKEN_KEY = 'board-auth-token'
+/** Legacy keys from client-only auth — cleared once on load */
+const LEGACY_USER_ID_KEY = 'board-auth-user-id'
+const LEGACY_REGISTERED_KEY = 'board-users-registered'
 
 const AuthContext = createContext(null)
 
-function persistSession(user) {
+function readToken() {
+  if (typeof window === 'undefined') return null
   try {
-    if (user === null) localStorage.setItem(STORAGE_KEY, 'logged-out')
-    else localStorage.setItem(STORAGE_KEY, String(user.id))
+    return localStorage.getItem(TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function persistToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token)
+    else localStorage.removeItem(TOKEN_KEY)
   } catch {
     /* ignore */
   }
 }
 
-function readSessionSync() {
-  if (typeof window === 'undefined') return toPublicUser(BOARD_MEMBERS[0])
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw === 'logged-out') return null
-    if (raw) {
-      const id = parseInt(raw, 10)
-      const m = findMemberById(id)
-      if (m) return toPublicUser(m)
-      return toPublicUser(BOARD_MEMBERS[0])
-    }
-    const u = toPublicUser(BOARD_MEMBERS[0])
-    persistSession(u)
-    return u
-  } catch {
-    return toPublicUser(BOARD_MEMBERS[0])
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(readSessionSync)
+  const [members, setMembers] = useState([])
+  const [user, setUser] = useState(null)
+  const [bootstrapped, setBootstrapped] = useState(false)
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem(LEGACY_USER_ID_KEY)
+      localStorage.removeItem(LEGACY_REGISTERED_KEY)
+    } catch {
+      /* ignore */
+    }
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const list = await fetchAuthMembers()
+        if (cancelled) return
+        setMembers(Array.isArray(list) ? list : [])
+      } catch {
+        if (!cancelled) setMembers([])
+      }
+
+      const token = readToken()
+      if (!token) {
+        if (!cancelled) {
+          setUser(null)
+          setBootstrapped(true)
+        }
+        return
+      }
+
+      try {
+        const me = await fetchAuthMe(token)
+        if (cancelled) return
+        if (me) {
+          setUser(me)
+        } else {
+          persistToken(null)
+          setUser(null)
+        }
+      } catch {
+        if (!cancelled) {
+          persistToken(null)
+          setUser(null)
+        }
+      } finally {
+        if (!cancelled) setBootstrapped(true)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const findMemberById = useCallback(
+    (id) => {
+      const n = Number(id)
+      if (!Number.isFinite(n)) return null
+      return members.find((m) => m.id === n) ?? null
+    },
+    [members],
+  )
+
+  const refreshMembers = useCallback(async () => {
+    try {
+      const list = await fetchAuthMembers()
+      setMembers(Array.isArray(list) ? list : [])
+    } catch {
+      /* keep previous members */
+    }
+  }, [])
 
   /**
-   * Swap for `fetch('/api/login', ...)` later; keep the same return shape.
    * @returns {Promise<{ ok: true } | { ok: false, error: string }>}
    */
   const login = useCallback(async (username, password) => {
-    await new Promise((r) => setTimeout(r, 120))
-    const member = findMemberByCredentials(username, password)
-    if (!member) {
-      return { ok: false, error: 'Invalid username or password.' }
+    try {
+      const { user: next, token } = await authLogin(username, password)
+      persistToken(token)
+      setUser(next)
+      await refreshMembers()
+      return { ok: true }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Could not sign in.'
+      return { ok: false, error: message }
     }
-    const next = toPublicUser(member)
-    setUser(next)
-    persistSession(next)
-    return { ok: true }
-  }, [])
+  }, [refreshMembers])
 
-  const logout = useCallback(() => {
+  /**
+   * @returns {Promise<{ ok: true } | { ok: false, error: string }>}
+   */
+  const register = useCallback(
+    async ({ name, username, password }) => {
+      try {
+        const { user: next, token } = await authRegister({
+          name,
+          username,
+          password,
+        })
+        persistToken(token)
+        setUser(next)
+        await refreshMembers()
+        return { ok: true }
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : 'Could not create account.'
+        return { ok: false, error: message }
+      }
+    },
+    [refreshMembers],
+  )
+
+  const logout = useCallback(async () => {
+    const token = readToken()
+    await authLogout(token)
+    persistToken(null)
     setUser(null)
-    persistSession(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, login, logout }),
-    [user, login, logout],
+    () => ({
+      user,
+      members,
+      bootstrapped,
+      findMemberById,
+      login,
+      register,
+      logout,
+    }),
+    [user, members, bootstrapped, findMemberById, login, register, logout],
   )
 
   return (

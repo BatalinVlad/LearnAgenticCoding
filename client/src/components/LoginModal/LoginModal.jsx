@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 
-export function LoginModal({ open, onClose, onSubmit }) {
+/**
+ * @param {object} props
+ * @param {boolean} props.open
+ * @param {() => void} props.onClose
+ * @param {(username: string, password: string) => Promise<{ ok: boolean, error?: string }>} props.onSignIn
+ * @param {(data: { name: string, username: string, password: string }) => Promise<{ ok: boolean, error?: string }>} props.onSignUp
+ */
+export function LoginModal({ open, onClose, onSignIn, onSignUp }) {
+  const [mode, setMode] = useState('signin')
+  const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -11,6 +20,8 @@ export function LoginModal({ open, onClose, onSubmit }) {
   useEffect(() => {
     if (!open) return
     document.body.style.overflow = 'hidden'
+    setMode('signin')
+    setName('')
     setUsername('')
     setPassword('')
     setError('')
@@ -26,19 +37,50 @@ export function LoginModal({ open, onClose, onSubmit }) {
     e.preventDefault()
     setError('')
     const u = username.trim()
-    if (!u || !password) {
-      setError('Enter username and password.')
+    if (mode === 'signin') {
+      if (!u || !password) {
+        setError('Enter username and password.')
+        return
+      }
+      setPending(true)
+      try {
+        const result = await onSignIn(u, password)
+        if (result.ok) onClose?.()
+        else setError(result.error || 'Could not sign in.')
+      } finally {
+        setPending(false)
+      }
+      return
+    }
+
+    const displayName = name.trim()
+    if (!displayName || !u || !password) {
+      setError('Enter your name, username, and password.')
       return
     }
     setPending(true)
     try {
-      const result = await onSubmit(u, password)
+      const result = await onSignUp({
+        name: displayName,
+        username: u,
+        password,
+      })
       if (result.ok) onClose?.()
-      else setError(result.error || 'Could not sign in.')
+      else setError(result.error || 'Could not create account.')
     } finally {
       setPending(false)
     }
   }
+
+  const title = mode === 'signin' ? 'Sign in' : 'Create account'
+  const primaryLabel =
+    mode === 'signin'
+      ? pending
+        ? 'Signing in…'
+        : 'Sign in'
+      : pending
+        ? 'Creating…'
+        : 'Create account'
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose} role="presentation">
@@ -51,7 +93,7 @@ export function LoginModal({ open, onClose, onSubmit }) {
       >
         <div className="modal-header">
           <h2 id="login-modal-title" className="modal-title">
-            Sign in
+            {title}
           </h2>
           <button
             type="button"
@@ -78,11 +120,29 @@ export function LoginModal({ open, onClose, onSubmit }) {
         </div>
         <form className="login-modal__form" onSubmit={handleSubmit}>
           <div className="modal-body login-modal__body">
-            <label className="login-modal__label" htmlFor="login-username">
+            {mode === 'signup' ? (
+              <>
+                <label className="login-modal__label" htmlFor="auth-name">
+                  Full name
+                </label>
+                <input
+                  id="auth-name"
+                  name="name"
+                  className="login-modal__input"
+                  type="text"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={pending}
+                  placeholder="Jane Doe"
+                />
+              </>
+            ) : null}
+            <label className="login-modal__label" htmlFor="auth-username">
               Username
             </label>
             <input
-              id="login-username"
+              id="auth-username"
               name="username"
               className="login-modal__input"
               type="text"
@@ -92,15 +152,17 @@ export function LoginModal({ open, onClose, onSubmit }) {
               disabled={pending}
               {...inputAutofillIgnoreProps}
             />
-            <label className="login-modal__label" htmlFor="login-password">
+            <label className="login-modal__label" htmlFor="auth-password">
               Password
             </label>
             <input
-              id="login-password"
+              id="auth-password"
               name="password"
               className="login-modal__input"
               type="password"
-              autoComplete="current-password"
+              autoComplete={
+                mode === 'signin' ? 'current-password' : 'new-password'
+              }
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={pending}
@@ -110,6 +172,37 @@ export function LoginModal({ open, onClose, onSubmit }) {
                 {error}
               </p>
             ) : null}
+            <p className="login-modal__switch">
+              {mode === 'signin' ? (
+                <>
+                  No account?{' '}
+                  <button
+                    type="button"
+                    className="login-modal__switch-btn"
+                    onClick={() => {
+                      setMode('signup')
+                      setError('')
+                    }}
+                  >
+                    Create account
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    className="login-modal__switch-btn"
+                    onClick={() => {
+                      setMode('signin')
+                      setError('')
+                    }}
+                  >
+                    Sign in
+                  </button>
+                </>
+              )}
+            </p>
           </div>
           <div className="modal-footer">
             <button
@@ -125,12 +218,12 @@ export function LoginModal({ open, onClose, onSubmit }) {
               className="modal-btn modal-btn--primary"
               disabled={pending}
             >
-              {pending ? 'Signing in…' : 'Sign in'}
+              {primaryLabel}
             </button>
           </div>
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

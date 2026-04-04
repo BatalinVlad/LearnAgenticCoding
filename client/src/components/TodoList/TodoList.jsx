@@ -15,6 +15,7 @@ export function TodoList({
   onRemovePhoto,
   onDuplicate,
   onUpdateCardLabel,
+  onUpdateCardAssignee,
   onDelete,
 }) {
   return (
@@ -74,6 +75,7 @@ export function TodoList({
                     }}
                     onDuplicate={onDuplicate}
                     onUpdateCardLabel={onUpdateCardLabel}
+                    onUpdateCardAssignee={onUpdateCardAssignee}
                     onDelete={(id) => {
                       onDelete(id)
                       setMenuTaskId(null)

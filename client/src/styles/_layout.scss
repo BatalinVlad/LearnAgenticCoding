@@ -257,17 +257,17 @@
   transition: background 0.15s ease, color 0.15s ease;
 
   &:hover, &:focus-visible {
-    background: var(--ds-background-neutral-hovered, rgba(9, 30, 66, 0.08));
+    background: rgba(9, 30, 66, 0.04);
     color: var(--ds-text);
     outline: none;
   }
 
   &--selected {
-    background: var(--ds-background-selected, rgba(12, 102, 228, 0.1));
+    background: rgba(12, 102, 228, 0.08);
     color: var(--primary-color);
     
     &:hover, &:focus-visible {
-      background: var(--ds-background-selected-hovered, rgba(12, 102, 228, 0.15));
+      background: rgba(12, 102, 228, 0.12);
     }
   }
 }
