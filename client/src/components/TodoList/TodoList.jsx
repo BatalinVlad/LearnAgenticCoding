@@ -8,10 +8,12 @@ export function TodoList({
   isDragDisabled,
   menuTaskId,
   setMenuTaskId,
+  photoLoadingId,
   onOpenCard,
   onViewPhoto,
   onPhotoChange,
   onRemovePhoto,
+  onDuplicate,
   onDelete,
 }) {
   return (
@@ -46,6 +48,7 @@ export function TodoList({
                     dragHandleProps={dragProvided.dragHandleProps}
                     item={item}
                     isDragging={dragSnapshot.isDragging}
+                    isPhotoLoading={photoLoadingId === item.id}
                     menuOpen={menuTaskId === item.id}
                     onToggleMenu={() =>
                       setMenuTaskId((prev) =>
@@ -68,6 +71,7 @@ export function TodoList({
                       onRemovePhoto(id)
                       setMenuTaskId(null)
                     }}
+                    onDuplicate={onDuplicate}
                     onDelete={(id) => {
                       onDelete(id)
                       setMenuTaskId(null)

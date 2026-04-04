@@ -1,13 +1,12 @@
 .user-nav {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px;
+  gap: 10px;
+  padding: 4px 4px 4px 12px;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid transparent;
   border-radius: 20px;
-  transition: all 0.2s ease;
-  cursor: pointer;
+  transition: background 0.2s ease;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -17,6 +16,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    gap: 2px;
   }
 
   &__name {
@@ -25,6 +25,19 @@
     color: #ffffff;
     line-height: 1.2;
     padding-left: 5px;
+
+    &--muted {
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 0.85rem;
+    }
+  }
+
+  &__handle {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1;
   }
 
   &__avatar {
@@ -33,5 +46,39 @@
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid rgba(255, 255, 255, 0.8);
+
+    &--initials {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  &__auth-btn {
+    padding: 6px 12px;
+    margin-right: 2px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.85);
+      outline-offset: 2px;
+    }
   }
 }

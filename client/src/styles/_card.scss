@@ -185,6 +185,7 @@
 
 .card__thumb-wrap {
   display: block;
+  position: relative;
   width: 100%;
   max-height: 120px;
   border-radius: 6px;
@@ -198,6 +199,19 @@
   max-height: 120px;
   object-fit: cover;
   display: block;
+}
+
+.card__thumb-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 5;
 }
 
 .card__title {
@@ -448,6 +462,7 @@
 }
 
 .card-modal__cover {
+  position: relative;
   margin-bottom: 16px;
 }
 

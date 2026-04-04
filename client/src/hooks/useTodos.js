@@ -68,6 +68,7 @@ export function useTodos() {
   const [actionError, setActionError] = useState(null)
   /** Photo upload validation/read errors; shown in card modal for `taskId`. */
   const [photoError, setPhotoError] = useState(null)
+  const [photoLoadingId, setPhotoLoadingId] = useState(null)
   const [viewerPhoto, setViewerPhoto] = useState(null)
   const [menuTaskId, setMenuTaskId] = useState(null)
 
@@ -83,8 +84,6 @@ export function useTodos() {
       total === 0 ? 0 : Math.round((doneCount / total) * 100)
     return { total, doneCount, percent }
   }, [todos])
-
-  const allComplete = total > 0 && doneCount === total
 
   const load = useCallback(async () => {
     const data = await fetchJSON('/api/board')
@@ -327,6 +326,19 @@ export function useTodos() {
     }
   }
 
+  async function duplicateCard(id) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${id}/duplicate`, { method: 'POST' })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not duplicate card.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
   async function updateTaskPhoto(id, nextPhoto) {
     await fetchJSON(`/api/todos/${id}`, {
       method: 'PATCH',
@@ -358,6 +370,8 @@ export function useTodos() {
       e.target.value = ''
       return
     }
+    
+    setPhotoLoadingId(id)
     let dataUrl
     try {
       dataUrl = await new Promise((resolve, reject) => {
@@ -370,6 +384,7 @@ export function useTodos() {
       setPhotoError({ taskId: id, message: 'Could not read image file.' })
       console.error(e2)
       e.target.value = ''
+      setPhotoLoadingId(null)
       return
     }
 
@@ -386,6 +401,7 @@ export function useTodos() {
       console.error(e3)
       e.target.value = ''
     }
+    setPhotoLoadingId(null)
   }
 
   async function handleBoardDragEnd(result) {
@@ -480,6 +496,7 @@ export function useTodos() {
     loadError,
     actionError,
     photoError,
+    photoLoadingId,
     clearPhotoError,
     viewerPhoto,
     setViewerPhoto,
@@ -488,7 +505,6 @@ export function useTodos() {
     total,
     doneCount,
     percent,
-    allComplete,
     todosForColumn: (columnId) => todosForColumn(todos, columnId),
     handleSubmit,
     addColumn,
@@ -501,6 +517,7 @@ export function useTodos() {
     updateChecklistItemText,
     removeChecklistItem,
     remove,
+    duplicateCard,
     updateTaskPhoto,
     handleTaskPhotoChange,
     handleBoardDragEnd,

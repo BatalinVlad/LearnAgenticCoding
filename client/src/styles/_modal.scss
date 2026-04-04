@@ -1,24 +1,25 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  background: rgba(9, 30, 66, 0.5);
-  display: grid;
-  place-items: center;
+  z-index: 99999;
+  background: rgba(9, 30, 66, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
-  backdrop-filter: blur(4px);
-  animation: fade-in 0.2s ease-out;
+  backdrop-filter: blur(8px);
+  animation: modal-overlay-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-content {
-  width: min(90vw, 400px);
-  background: var(--ds-surface-overlay);
-  border-radius: 12px;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  width: min(90vw, 420px);
+  background: var(--ds-surface-overlay, #ffffff);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slide-up 0.2s ease-out;
+  animation: modal-content-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-header {
@@ -111,12 +112,102 @@
       transform: scale(0.97);
     }
   }
+
+  &--primary {
+    background: var(--ds-background-brand, #0c66e4);
+    color: #ffffff;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.06);
+      box-shadow: 0 2px 6px rgba(12, 102, 228, 0.35);
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.login-modal {
+  .modal-body {
+    color: var(--ds-text);
+  }
+}
+
+.login-modal__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.login-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-modal__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ds-text-subtle);
+}
+
+.login-modal__input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  color: var(--ds-text);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: 8px;
+  outline: none;
+  margin-bottom: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: var(--ds-background-brand, #0c66e4);
+    box-shadow: 0 0 0 2px rgba(12, 102, 228, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+  }
+}
+
+.login-modal__error {
+  margin: 4px 0 0;
+  font-size: 0.88rem;
+  color: var(--danger-color, #c9372c);
 }
 
 @keyframes slide-up {
   from {
     opacity: 0;
     transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modal-overlay-fade {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes modal-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
   }
   to {
     opacity: 1;

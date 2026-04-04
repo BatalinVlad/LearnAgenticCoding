@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
+import { BOARD_MEMBERS } from '../../data/boardUsers'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 import { UserNav } from '../UserNav/UserNav'
-
-const DUMMY_BOARD_MEMBERS = [
-  { id: 1, username: 'vbatalin', name: 'Vlad Batalin', initials: 'VB', password: 'password', tasks: ['task-1', 'task-2'] },
-  { id: 2, username: 'johndoe', name: 'John Doe', initials: 'JD', password: 'password', tasks: ['task-3'] },
-  { id: 3, username: 'sarahsmith', name: 'Sarah Smith', initials: 'SS', password: 'password', tasks: [] },
-]
 
 export function MainBoard({
   title,
@@ -54,7 +49,7 @@ export function MainBoard({
         </div>
         
         <div className="board-users">
-          {DUMMY_BOARD_MEMBERS.map(user => (
+          {BOARD_MEMBERS.map(user => (
             <div 
               key={user.id} 
               className="board-users__avatar" 

@@ -482,6 +482,46 @@ app.post('/api/todos', (req, res) => {
   res.status(201).json(item);
 });
 
+app.post('/api/todos/:id/duplicate', (req, res) => {
+  const id = Number(req.params.id);
+  const source = board.todos.find((t) => t.id === id);
+  if (!source) {
+    res.status(404).json({ error: 'not found' });
+    return;
+  }
+  const columnId = source.columnId;
+  for (const t of board.todos) {
+    if (t.columnId === columnId && t.sortOrder > source.sortOrder) {
+      t.sortOrder += 1;
+    }
+  }
+  const checklist = Array.isArray(source.checklist)
+    ? source.checklist
+        .filter((c) => c && String(c.text ?? '').trim().length > 0)
+        .map((c) => ({
+          id: nextChecklistItemId++,
+          text: String(c.text ?? '').trim(),
+          done: Boolean(c.done),
+        }))
+    : [];
+  const duplicate = {
+    id: nextTodoId++,
+    text: source.text,
+    done: false,
+    photo: typeof source.photo === 'string' ? source.photo : null,
+    columnId,
+    sortOrder: source.sortOrder + 1,
+    dueDate: normalizeDueDateField(source.dueDate),
+    description:
+      typeof source.description === 'string' ? source.description : '',
+    checklist,
+  };
+  board.todos.push(duplicate);
+  board.todos = sortTodos(board.todos);
+  saveBoard(board);
+  res.status(201).json(duplicate);
+});
+
 app.patch('/api/todos/:id', (req, res) => {
   const id = Number(req.params.id);
   const item = board.todos.find((t) => t.id === id);

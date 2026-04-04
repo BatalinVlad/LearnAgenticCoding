@@ -55,12 +55,7 @@
   inset: -20%;
   background: var(
     --task-bg-bloom,
-    radial-gradient(
-      circle at 50% 85%,
-      rgba(34, 197, 94, 0.35) 0%,
-      rgba(22, 163, 74, 0.14) 35%,
-      transparent 55%
-    )
+    transparent
   );
   animation: task-bg-bloom-pulse 10s ease-in-out infinite;
 }

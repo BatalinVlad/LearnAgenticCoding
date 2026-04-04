@@ -4,7 +4,6 @@ import TaskBackground from '../components/TaskBackground/TaskBackground'
 import { BackgroundPickerModal } from '../components/BackgroundPickerModal/BackgroundPickerModal'
 import { fetchJSON } from '../api'
 import { useTodos } from '../hooks/useTodos'
-import { ConfettiCelebration } from '../components/ConfettiCelebration/ConfettiCelebration'
 import { MainBoard } from '../components/MainBoard/MainBoard'
 import { Column } from '../components/Column/Column'
 import { TodoList } from '../components/TodoList/TodoList'
@@ -22,6 +21,13 @@ function filterTodosByCardText(todos, query) {
 
 const BOARD_BG_STORAGE_KEY = 'mainboard-background-v2'
 const BOARD_BG_LEGACY_KEY = 'mainboard-background-url'
+const DEFAULT_COMPANY_BG = {
+  url: 'https://images.unsplash.com/photo-1716703373229-b0e43de7dd5c?ixlib=rb-4.1.0&auto=format&fit=crop&w=1920&q=80',
+  credit: {
+    name: 'Musemind UX Agency',
+    url: 'https://unsplash.com/photos/a-large-open-office-space-with-many-desks-and-chairs-Mgm6aq1UYpI',
+  },
+}
 
 function isValidAnimatedTheme(t) {
   return (
@@ -71,13 +77,17 @@ function readStoredBackground() {
   } catch {
     /* ignore */
   }
-  return { url: null, credit: null, animatedTheme: null }
+  return {
+    url: DEFAULT_COMPANY_BG.url,
+    credit: DEFAULT_COMPANY_BG.credit,
+    animatedTheme: null,
+  }
 }
 
 export default function MainBoardPage() {
   const [columnToDelete, setColumnToDelete] = useState(null)
   const [openCardId, setOpenCardId] = useState(null)
-  const [boardTitle, setBoardTitle] = useState('MAIN BOARD')
+  const [boardTitle, setBoardTitle] = useState('QUALITY CONTROL WORKFLOW')
   const [cardFilter, setCardFilter] = useState('')
   const [backgroundUrl, setBackgroundUrl] = useState(
     () => readStoredBackground().url,
@@ -147,8 +157,9 @@ export default function MainBoardPage() {
 
   async function openBackgroundPicker() {
     setBgPickerOpen(true)
-    setBgSearchQuery('')
-    await loadBackgroundPhotos('')
+    const defaultSearch = 'open space office'
+    setBgSearchQuery(defaultSearch)
+    await loadBackgroundPhotos(defaultSearch)
   }
 
   const {
@@ -159,12 +170,12 @@ export default function MainBoardPage() {
     loadError,
     actionError,
     photoError,
+    photoLoadingId,
     clearPhotoError,
     viewerPhoto,
     setViewerPhoto,
     menuTaskId,
     setMenuTaskId,
-    allComplete,
     todosForColumn,
     handleSubmit,
     addColumn,
@@ -177,6 +188,7 @@ export default function MainBoardPage() {
     updateChecklistItemText,
     removeChecklistItem,
     remove,
+    duplicateCard,
     updateTaskPhoto,
     handleTaskPhotoChange,
     handleBoardDragEnd,
@@ -225,7 +237,6 @@ export default function MainBoardPage() {
         </div>
       ) : null}
       <main className="app">
-        {allComplete ? <ConfettiCelebration /> : null}
 
         <MainBoard
           title={boardTitle}
@@ -298,6 +309,7 @@ export default function MainBoardPage() {
                                     isDragDisabled={cardFilter.trim().length > 0}
                                     menuTaskId={menuTaskId}
                                     setMenuTaskId={setMenuTaskId}
+                                    photoLoadingId={photoLoadingId}
                                     onOpenCard={(card) => {
                                       if (
                                         photoError &&
@@ -312,6 +324,10 @@ export default function MainBoardPage() {
                                     onRemovePhoto={(id) =>
                                       updateTaskPhoto(id, null)
                                     }
+                                    onDuplicate={(id) => {
+                                      duplicateCard(id)
+                                      setMenuTaskId(null)
+                                    }}
                                     onDelete={remove}
                                   />
                                 )}
@@ -405,6 +421,7 @@ export default function MainBoardPage() {
               ? photoError.message
               : null
           }
+          isPhotoLoading={photoLoadingId === openCard.id}
           onClose={() => {
             clearPhotoError()
             setOpenCardId(null)

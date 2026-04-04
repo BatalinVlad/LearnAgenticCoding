@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Spinner } from '../Spinner/Spinner'
 
 export function BackgroundPickerModal({
   open,
@@ -92,7 +93,10 @@ export function BackgroundPickerModal({
             </button>
           </form>
           {loading ? (
-            <p className="bg-picker__status">Loading photos…</p>
+            <div className="bg-picker__status bg-picker__status--loading">
+              <Spinner size={32} />
+              <p>Loading photos…</p>
+            </div>
           ) : error ? (
             <p className="bg-picker__status bg-picker__status--error" role="alert">
               {error}

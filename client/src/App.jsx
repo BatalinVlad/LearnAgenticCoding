@@ -1,5 +1,10 @@
+import { AuthProvider } from './context/AuthContext'
 import MainBoardPage from './pages/MainBoardPage'
 
 export default function App() {
-  return <MainBoardPage />
+  return (
+    <AuthProvider>
+      <MainBoardPage />
+    </AuthProvider>
+  )
 }

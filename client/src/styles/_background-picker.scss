@@ -122,6 +122,13 @@
   color: var(--ds-text-subtle);
   font-size: 0.95rem;
 
+  &--loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
   &--error {
     color: var(--danger-color, #c9372c);
   }

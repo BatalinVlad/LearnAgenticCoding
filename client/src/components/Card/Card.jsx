@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { checklistStats } from '../../hooks/useTodos'
+import { Spinner } from '../Spinner/Spinner'
 import {
   formatDueDateShort,
   isDueDateOverdue,
@@ -12,6 +13,7 @@ function CardMenuOptions({
   onViewPhoto,
   onPhotoChange,
   onRemovePhoto,
+  onDuplicate,
   onDelete,
 }) {
   return (
@@ -101,6 +103,31 @@ function CardMenuOptions({
       ) : null}
       <button
         type="button"
+        className="card-menu__option"
+        role="menuitem"
+        onClick={() => onDuplicate(item.id)}
+      >
+        <span className="card-menu__option-content">
+          <svg
+            className="card-menu__icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          <span>Duplicate card</span>
+        </span>
+      </button>
+      <button
+        type="button"
         className="card-menu__option card-menu__option--danger"
         role="menuitem"
         onClick={() => onDelete(item.id)}
@@ -136,12 +163,14 @@ export function Card({
   dragHandleProps,
   item,
   isDragging,
+  isPhotoLoading,
   menuOpen,
   onToggleMenu,
   onOpenCard,
   onViewPhoto,
   onPhotoChange,
   onRemovePhoto,
+  onDuplicate,
   onDelete,
 }) {
   const { total, doneCount } = checklistStats(item.checklist)
@@ -180,6 +209,7 @@ export function Card({
     onViewPhoto,
     onPhotoChange,
     onRemovePhoto,
+    onDuplicate,
     onDelete,
   }
 
@@ -199,9 +229,14 @@ export function Card({
           className="card__open"
           onClick={() => onOpenCard(item)}
         >
-          {item.photo ? (
+          {item.photo || isPhotoLoading ? (
             <span className="card__thumb-wrap">
-              <img src={item.photo} alt="" className="card__thumb" />
+              {item.photo ? <img src={item.photo} alt="" className="card__thumb" /> : null}
+              {isPhotoLoading ? (
+                <span className="card__thumb-loading">
+                  <Spinner size={20} />
+                </span>
+              ) : null}
             </span>
           ) : null}
           <span className="card__title">{item.text}</span>

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { ProgressFooter } from '../ProgressFooter/ProgressFooter'
 import { checklistStats } from '../../hooks/useTodos'
+import { Spinner } from '../Spinner/Spinner'
+import { ConfettiCelebration } from '../ConfettiCelebration/ConfettiCelebration'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 import { toDateInputValue } from '../../utils/dueDateUtils'
 
@@ -19,6 +21,7 @@ export function CardModal({
   onViewPhoto,
   onPhotoChange,
   onRemovePhoto,
+  isPhotoLoading,
 }) {
   const [title, setTitle] = useState(card.text)
   const [cardDescription, setCardDescription] = useState(
@@ -52,6 +55,19 @@ export function CardModal({
 
   const { total, doneCount, percent } = checklistStats(card.checklist)
   const checklist = Array.isArray(card.checklist) ? card.checklist : []
+  const isComplete = total > 0 && doneCount === total
+
+  const [showConfetti, setShowConfetti] = useState(false)
+  const prevIsComplete = useRef(isComplete)
+
+  useEffect(() => {
+    if (isComplete && !prevIsComplete.current) {
+      setShowConfetti(true)
+      const timer = setTimeout(() => setShowConfetti(false), 3000)
+      return () => clearTimeout(timer)
+    }
+    prevIsComplete.current = isComplete
+  }, [isComplete])
 
   function commitTitle() {
     const t = title.trim()
@@ -108,7 +124,9 @@ export function CardModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="card-modal-title"
+        style={{ position: 'relative' }}
       >
+        {showConfetti ? <ConfettiCelebration /> : null}
         <div className="modal-header card-modal__header">
           <h2
             id="card-modal-title"
@@ -207,15 +225,31 @@ export function CardModal({
             </p>
           ) : null}
 
-          {card.photo ? (
+          {card.photo || isPhotoLoading ? (
             <div className="card-modal__cover">
-              <button
-                type="button"
-                className="card-modal__cover-btn"
-                onClick={() => onViewPhoto(card.photo)}
-              >
-                <img src={card.photo} alt="Card cover" className="card-modal__cover-img" />
-              </button>
+              {card.photo ? (
+                <button
+                  type="button"
+                  className="card-modal__cover-btn"
+                  onClick={() => onViewPhoto(card.photo)}
+                  style={{ position: 'relative' }}
+                >
+                  <img src={card.photo} alt="Card cover" className="card-modal__cover-img" />
+                  {isPhotoLoading ? (
+                    <div className="card__thumb-loading">
+                      <Spinner size={32} />
+                    </div>
+                  ) : null}
+                </button>
+              ) : (
+                <div className="card-modal__cover-btn" style={{ minHeight: '120px', position: 'relative' }}>
+                  {isPhotoLoading ? (
+                    <div className="card__thumb-loading">
+                      <Spinner size={32} />
+                    </div>
+                  ) : null}
+                </div>
+              )}
               <div className="card-modal__cover-actions">
                 <label className="card-modal__link-btn">
                   Change photo
