@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 
 export function LoginModal({ open, onClose, onSubmit }) {
@@ -39,7 +40,7 @@ export function LoginModal({ open, onClose, onSubmit }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
         className="modal-content login-modal"
@@ -129,6 +130,7 @@ export function LoginModal({ open, onClose, onSubmit }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

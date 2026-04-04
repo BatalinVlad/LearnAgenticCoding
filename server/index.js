@@ -34,6 +34,7 @@ function normalizeBoard(raw) {
       sortOrder: i,
       description:
         typeof t.description === 'string' ? t.description : '',
+      label: normalizeLabel(t.label),
       checklist: normalizeChecklist(t.checklist),
     }));
     return {
@@ -72,6 +73,7 @@ function normalizeBoard(raw) {
           description:
             typeof t.description === 'string' ? t.description : '',
           dueDate: normalizeDueDateField(t.dueDate),
+          label: normalizeLabel(t.label),
           checklist,
         };
       }),
@@ -81,6 +83,16 @@ function normalizeBoard(raw) {
     columns: [{ id: 1, title: 'TO DO', order: 0 }],
     todos: [],
   };
+}
+
+/** @returns {number|null} Label id 0–4, or null for none */
+function normalizeLabel(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.floor(n);
+  if (i < 0 || i > 4) return null;
+  return i;
 }
 
 /** @returns {string|null} ISO calendar date YYYY-MM-DD or null */
@@ -475,6 +487,8 @@ app.post('/api/todos', (req, res) => {
     columnId,
     sortOrder: maxOrder + 1,
     dueDate: normalizeDueDateField(req.body.dueDate),
+    description: '',
+    label: null,
     checklist: [],
   };
   board.todos.push(item);
@@ -514,6 +528,7 @@ app.post('/api/todos/:id/duplicate', (req, res) => {
     dueDate: normalizeDueDateField(source.dueDate),
     description:
       typeof source.description === 'string' ? source.description : '',
+    label: normalizeLabel(source.label),
     checklist,
   };
   board.todos.push(duplicate);
@@ -543,6 +558,9 @@ app.patch('/api/todos/:id', (req, res) => {
   }
   if (Object.prototype.hasOwnProperty.call(req.body, 'dueDate')) {
     item.dueDate = normalizeDueDateField(req.body.dueDate);
+  }
+  if (Object.prototype.hasOwnProperty.call(req.body, 'label')) {
+    item.label = normalizeLabel(req.body.label);
   }
   saveBoard(board);
   res.json(item);

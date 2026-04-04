@@ -230,6 +230,22 @@ export function useTodos() {
     }
   }
 
+  async function updateCardLabel(id, label) {
+    setActionError(null)
+    try {
+      await fetchJSON(`/api/todos/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ label }),
+      })
+      await load()
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : 'Could not update label.'
+      setActionError(message)
+      console.error(e)
+    }
+  }
+
   async function updateCardDueDate(id, dueDate) {
     setActionError(null)
     try {
@@ -511,6 +527,7 @@ export function useTodos() {
     updateColumnTitle,
     updateCardTitle,
     updateCardDescription,
+    updateCardLabel,
     updateCardDueDate,
     addChecklistItem,
     toggleChecklistItem,

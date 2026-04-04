@@ -7,17 +7,32 @@ import {
   isDueDateOverdue,
   isDueDateToday,
 } from '../../utils/dueDateUtils'
+import { CardLabelSwatches } from '../CardLabelSwatches/CardLabelSwatches'
+import { isValidCardLabelId } from '../../constants/cardLabels'
 
 function CardMenuOptions({
   item,
   onViewPhoto,
   onPhotoChange,
   onRemovePhoto,
+  onCardLabelChange,
   onDuplicate,
   onDelete,
 }) {
   return (
     <>
+      <div className="card-menu__label-block">
+        <div className="card-menu__label-heading" id={`card-menu-label-${item.id}`}>
+          Label
+        </div>
+        <CardLabelSwatches
+          className="card-menu__label-swatches"
+          selectedId={
+            isValidCardLabelId(item.label) ? Number(item.label) : null
+          }
+          onSelect={(id) => onCardLabelChange(id)}
+        />
+      </div>
       {item.photo ? (
         <button
           type="button"
@@ -172,6 +187,7 @@ export function Card({
   onRemovePhoto,
   onDuplicate,
   onDelete,
+  onUpdateCardLabel,
 }) {
   const { total, doneCount } = checklistStats(item.checklist)
   const hasDescription = String(item.description ?? '').trim().length > 0
@@ -209,9 +225,13 @@ export function Card({
     onViewPhoto,
     onPhotoChange,
     onRemovePhoto,
+    onCardLabelChange: (label) => onUpdateCardLabel(item.id, label),
     onDuplicate,
     onDelete,
   }
+
+  const labelClass =
+    isValidCardLabelId(item.label) ? ` card--label-${item.label}` : ''
 
   const itemNode = (
     <li
@@ -219,6 +239,7 @@ export function Card({
       {...draggableProps}
       className={
         'item card' +
+        labelClass +
         (isDragging ? ' dragging' : '') +
         (menuOpen ? ' card-menu-open' : '')
       }

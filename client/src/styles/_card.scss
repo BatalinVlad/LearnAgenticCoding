@@ -15,6 +15,28 @@
       cursor: grabbing;
     }
   }
+
+  /* Soft single-hue gradients (see constants/cardLabels.js) */
+  &.card--label-0 {
+    background: linear-gradient(148deg, #fff8f8 0%, #fecdd3 100%);
+    border-color: rgba(251, 113, 133, 0.28);
+  }
+  &.card--label-1 {
+    background: linear-gradient(148deg, #fffbeb 0%, #fde68a 100%);
+    border-color: rgba(245, 158, 11, 0.28);
+  }
+  &.card--label-2 {
+    background: linear-gradient(148deg, #f0fdf4 0%, #bbf7d0 100%);
+    border-color: rgba(52, 211, 153, 0.28);
+  }
+  &.card--label-3 {
+    background: linear-gradient(148deg, #f0f9ff 0%, #bae6fd 100%);
+    border-color: rgba(56, 189, 248, 0.28);
+  }
+  &.card--label-4 {
+    background: linear-gradient(148deg, #faf5ff 0%, #e9d5ff 100%);
+    border-color: rgba(192, 132, 252, 0.28);
+  }
 }
 
 .card__drag-shell {
@@ -81,6 +103,83 @@
   border: 1px solid var(--ds-border);
   z-index: 30;
   animation: fade-in 0.12s ease-out;
+}
+
+.card-menu__label-block {
+  padding: 6px 8px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.card-menu__label-heading {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-subtle);
+  margin-bottom: 8px;
+}
+
+.card-menu__label-swatches.card-label-swatches {
+  justify-content: flex-start;
+}
+
+.card-label-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.card-label-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid rgba(9, 30, 66, 0.12);
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    border-color 0.1s ease;
+
+  &:hover {
+    transform: scale(1.06);
+    border-color: rgba(9, 30, 66, 0.22);
+  }
+
+  &--active {
+    box-shadow: 0 0 0 2px var(--primary-color);
+    border-color: rgba(12, 102, 228, 0.35);
+  }
+
+  &--clear {
+    background: var(--ds-background-neutral) !important;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--ds-text-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      color: var(--ds-text);
+    }
+  }
+}
+
+.card-modal__label-section {
+  margin-bottom: 16px;
+}
+
+.card-modal__label-section .card-modal__label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.card-modal__label-swatches.card-label-swatches {
+  gap: 10px;
 }
 
 /* Must not use global fade-in here: that animation sets transform and overrides

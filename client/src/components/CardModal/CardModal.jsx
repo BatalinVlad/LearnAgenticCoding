@@ -5,6 +5,8 @@ import { Spinner } from '../Spinner/Spinner'
 import { ConfettiCelebration } from '../ConfettiCelebration/ConfettiCelebration'
 import { inputAutofillIgnoreProps } from '../../utils/inputAutofillIgnoreProps'
 import { toDateInputValue } from '../../utils/dueDateUtils'
+import { CardLabelSwatches } from '../CardLabelSwatches/CardLabelSwatches'
+import { isValidCardLabelId } from '../../constants/cardLabels'
 
 export function CardModal({
   card,
@@ -12,6 +14,7 @@ export function CardModal({
   onClose,
   onUpdateTitle,
   onUpdateDescription,
+  onUpdateCardLabel,
   onUpdateDueDate,
   onAddChecklistItem,
   onToggleChecklistItem,
@@ -174,6 +177,19 @@ export function CardModal({
             {...inputAutofillIgnoreProps}
             autoComplete="off"
           />
+
+          <div className="card-modal__label-section">
+            <span className="card-modal__label" id="card-modal-label-heading">
+              Label
+            </span>
+            <CardLabelSwatches
+              className="card-modal__label-swatches"
+              selectedId={
+                isValidCardLabelId(card.label) ? Number(card.label) : null
+              }
+              onSelect={(id) => onUpdateCardLabel(card.id, id)}
+            />
+          </div>
 
           <label className="card-modal__label" htmlFor="card-description-input">
             Description

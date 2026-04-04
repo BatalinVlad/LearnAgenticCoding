@@ -182,6 +182,7 @@ export default function MainBoardPage() {
     updateColumnTitle,
     updateCardTitle,
     updateCardDescription,
+    updateCardLabel,
     updateCardDueDate,
     addChecklistItem,
     toggleChecklistItem,
@@ -328,6 +329,7 @@ export default function MainBoardPage() {
                                       duplicateCard(id)
                                       setMenuTaskId(null)
                                     }}
+                                    onUpdateCardLabel={updateCardLabel}
                                     onDelete={remove}
                                   />
                                 )}
@@ -428,6 +430,7 @@ export default function MainBoardPage() {
           }}
           onUpdateTitle={updateCardTitle}
           onUpdateDescription={updateCardDescription}
+          onUpdateCardLabel={updateCardLabel}
           onUpdateDueDate={updateCardDueDate}
           onAddChecklistItem={addChecklistItem}
           onToggleChecklistItem={toggleChecklistItem}
