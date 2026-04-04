@@ -224,26 +224,68 @@ export function Card({
   const showFooter = showMeta || showChecklist || showAssignee
 
   const triggerRef = useRef(null)
+  const menuDropdownRef = useRef(null)
   const [menuPos, setMenuPos] = useState(null)
 
-  /* eslint-disable react-hooks/set-state-in-effect -- menu portal: measure trigger with getBoundingClientRect */
+  /* eslint-disable react-hooks/set-state-in-effect -- menu portal: measure trigger + dropdown vs viewport */
   useLayoutEffect(() => {
     if (!menuOpen || isDragging) {
       setMenuPos(null)
       return
     }
-    function updatePosition() {
+    const VIEWPORT_MARGIN = 10
+    const GAP = 4
+    let cancelled = false
+    let raf1 = 0
+    let raf2 = 0
+    let resizeObserver = null
+
+    function measureAndPosition() {
+      if (cancelled) return
       const el = triggerRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
-      setMenuPos({ top: rect.bottom + 4, left: rect.right })
+      const menuEl = menuDropdownRef.current
+      const menuH = menuEl?.offsetHeight ?? 0
+      const vh = window.innerHeight
+
+      if (menuEl && !resizeObserver) {
+        resizeObserver = new ResizeObserver(() => {
+          if (!cancelled) measureAndPosition()
+        })
+        resizeObserver.observe(menuEl)
+      }
+
+      let top
+      if (menuH > 0) {
+        const openDownTop = rect.bottom + GAP
+        const bottomEdge = openDownTop + menuH
+        if (bottomEdge <= vh - VIEWPORT_MARGIN) {
+          top = openDownTop
+        } else {
+          top = Math.max(VIEWPORT_MARGIN, vh - VIEWPORT_MARGIN - menuH)
+        }
+      } else {
+        top = rect.bottom + GAP
+      }
+
+      setMenuPos({ top, left: rect.right })
     }
-    updatePosition()
-    window.addEventListener('scroll', updatePosition, true)
-    window.addEventListener('resize', updatePosition)
+
+    measureAndPosition()
+    raf1 = requestAnimationFrame(() => {
+      measureAndPosition()
+      raf2 = requestAnimationFrame(measureAndPosition)
+    })
+    window.addEventListener('scroll', measureAndPosition, true)
+    window.addEventListener('resize', measureAndPosition)
     return () => {
-      window.removeEventListener('scroll', updatePosition, true)
-      window.removeEventListener('resize', updatePosition)
+      cancelled = true
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+      resizeObserver?.disconnect()
+      window.removeEventListener('scroll', measureAndPosition, true)
+      window.removeEventListener('resize', measureAndPosition)
     }
   }, [menuOpen, isDragging])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -429,17 +471,21 @@ export function Card({
               </div>
             ) : menuPos ? (
               createPortal(
-                <div
-                  className="card-menu__dropdown card-menu__dropdown--portal"
-                  role="menu"
-                  data-card-menu
-                  style={{
-                    top: menuPos.top,
-                    left: menuPos.left,
-                  }}
-                >
-                  <CardMenuOptions {...menuOptionsProps} />
-                </div>,
+                <>
+                  <div className="card-menu__overlay" onClick={onToggleMenu} />
+                  <div
+                    ref={menuDropdownRef}
+                    className="card-menu__dropdown card-menu__dropdown--portal"
+                    role="menu"
+                    data-card-menu
+                    style={{
+                      top: menuPos.top,
+                      left: menuPos.left,
+                    }}
+                  >
+                    <CardMenuOptions {...menuOptionsProps} />
+                  </div>
+                </>,
                 document.body,
               )
             ) : null

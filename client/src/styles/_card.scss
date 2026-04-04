@@ -119,7 +119,7 @@
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  min-width: 188px;
+  width: 260px;
   padding: 6px;
   background: var(--ds-surface-overlay);
   border-radius: 8px;
@@ -306,11 +306,26 @@
 }
 
 /* Escapes column .list-scroll overflow; positioned from trigger via inline top/left */
+.card-menu__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  animation: fade-in 0.15s ease-out;
+}
+
 .card-menu__dropdown--portal {
   position: fixed;
   right: auto;
   transform: translateX(-100%);
   z-index: 10000;
+  max-height: calc(100vh - 20px);
+  overflow-x: hidden;
+  overflow-y: auto;
   animation: card-menu-dropdown-fade-in 0.12s ease-out;
 }
 
