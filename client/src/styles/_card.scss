@@ -124,6 +124,20 @@
   justify-content: flex-start;
 }
 
+.card-menu__assignee-block {
+  padding: 6px 8px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--ds-border);
+
+  .card-assignee-field {
+    gap: 6px;
+  }
+
+  .card-menu__label-heading {
+    margin-bottom: 6px;
+  }
+}
+
 .card-label-swatches {
   display: flex;
   flex-wrap: wrap;
@@ -180,6 +194,78 @@
 
 .card-modal__label-swatches.card-label-swatches {
   gap: 10px;
+}
+
+.card-modal__assignee-section {
+  margin-bottom: 16px;
+}
+
+.card-assignee-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-assignee-field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ds-text-subtle);
+}
+
+.card-assignee-avatars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-assignee-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  border: 2px solid transparent;
+  outline: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--primary-color);
+  }
+
+  &.is-selected {
+    box-shadow: 0 0 0 2px var(--ds-surface-overlay, #ffffff), 0 0 0 4px var(--primary-color);
+  }
+
+  &--unassigned {
+    background: var(--ds-background-neutral);
+    color: var(--ds-text-subtle);
+    border: 1px dashed var(--ds-border);
+
+    &:hover {
+      background: var(--ds-background-neutral-hovered);
+      color: var(--ds-text);
+      border-color: transparent;
+    }
+
+    &.is-selected {
+      border-color: transparent;
+      box-shadow: 0 0 0 2px var(--ds-surface-overlay, #ffffff), 0 0 0 4px var(--ds-text-subtle);
+    }
+  }
+}
+
+.card-assignee-select--menu {
+  /* No longer used for <select>, but keeping block if needed for portal overrides */
 }
 
 /* Must not use global fade-in here: that animation sets transform and overrides
@@ -329,6 +415,34 @@
   margin-top: auto;
   width: 100%;
   flex-wrap: wrap;
+}
+
+.card__footer-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card__assignee {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.card__assignee-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: 0 0 0 1px rgba(9, 30, 66, 0.12);
 }
 
 .card__meta {

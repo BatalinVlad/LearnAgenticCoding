@@ -8,7 +8,13 @@ import {
   isDueDateToday,
 } from '../../utils/dueDateUtils'
 import { CardLabelSwatches } from '../CardLabelSwatches/CardLabelSwatches'
+import { CardAssigneeSelect } from '../CardAssigneeSelect/CardAssigneeSelect'
 import { isValidCardLabelId } from '../../constants/cardLabels'
+import { useAuth } from '../../context/AuthContext'
+import {
+  getUserBoardAvatarGradient,
+  getUserSoftGradientForeground,
+} from '../../utils/userColorGradient'
 
 function CardMenuOptions({
   item,
@@ -16,6 +22,7 @@ function CardMenuOptions({
   onPhotoChange,
   onRemovePhoto,
   onCardLabelChange,
+  onAssigneeChange,
   onDuplicate,
   onDelete,
 }) {
@@ -31,6 +38,16 @@ function CardMenuOptions({
             isValidCardLabelId(item.label) ? Number(item.label) : null
           }
           onSelect={(id) => onCardLabelChange(id)}
+        />
+      </div>
+      <div className="card-menu__assignee-block">
+        <div className="card-menu__label-heading">Assignee</div>
+        <CardAssigneeSelect
+          showLabel={false}
+          value={item.assigneeId}
+          onChange={onAssigneeChange}
+          idPrefix={`card-menu-assignee-${item.id}`}
+          selectClassName="card-assignee-select--menu"
         />
       </div>
       {item.photo ? (
@@ -188,12 +205,23 @@ export function Card({
   onDuplicate,
   onDelete,
   onUpdateCardLabel,
+  onUpdateCardAssignee,
 }) {
+  const { findMemberById } = useAuth()
   const { total, doneCount } = checklistStats(item.checklist)
   const hasDescription = String(item.description ?? '').trim().length > 0
   const showMeta = Boolean(item.dueDate) || hasDescription
   const showChecklist = total > 0
-  const showFooter = showMeta || showChecklist
+  const rawAssigneeId = item.assigneeId
+  const assigneeIdNum =
+    rawAssigneeId == null || rawAssigneeId === ''
+      ? NaN
+      : Number(rawAssigneeId)
+  const assignee = Number.isFinite(assigneeIdNum)
+    ? findMemberById(assigneeIdNum)
+    : null
+  const showAssignee = assignee != null
+  const showFooter = showMeta || showChecklist || showAssignee
 
   const triggerRef = useRef(null)
   const [menuPos, setMenuPos] = useState(null)
@@ -226,6 +254,7 @@ export function Card({
     onPhotoChange,
     onRemovePhoto,
     onCardLabelChange: (label) => onUpdateCardLabel(item.id, label),
+    onAssigneeChange: (id) => onUpdateCardAssignee(item.id, id),
     onDuplicate,
     onDelete,
   }
@@ -263,6 +292,7 @@ export function Card({
           <span className="card__title">{item.text}</span>
           {showFooter ? (
             <div className="card__footer">
+              <div className="card__footer-main">
               {showMeta ? (
                 <div className="card__meta">
                 {item.dueDate ? (
@@ -337,6 +367,27 @@ export function Card({
                   </svg>
                   <span className="card__progress-meta">
                     {doneCount}/{total}
+                  </span>
+                </span>
+              ) : null}
+              </div>
+              {showAssignee ? (
+                <span
+                  className="card__assignee"
+                  title={`${assignee.name} (@${assignee.username})`}
+                >
+                  <span
+                    className="card__assignee-avatar"
+                    style={{
+                      backgroundImage: getUserBoardAvatarGradient(assignee.color, {
+                        userId: assignee.id,
+                      }),
+                      color: getUserSoftGradientForeground(assignee.color, {
+                        userId: assignee.id,
+                      }),
+                    }}
+                  >
+                    {assignee.initials}
                   </span>
                 </span>
               ) : null}
