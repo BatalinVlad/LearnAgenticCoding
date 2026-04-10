@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { ProgressFooter } from '../ProgressFooter/ProgressFooter'
 import { checklistStats } from '../../hooks/useTodos'
 import { Spinner } from '../Spinner/Spinner'
@@ -120,7 +121,7 @@ export function CardModal({
     setEditingId(null)
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose} data-bwignore="true">
       <div
         className="modal-content card-modal"
@@ -415,6 +416,7 @@ export function CardModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

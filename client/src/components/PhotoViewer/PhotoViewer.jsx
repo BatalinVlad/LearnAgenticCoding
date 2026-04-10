@@ -1,8 +1,10 @@
+import { createPortal } from 'react-dom'
+
 export function PhotoViewer({ src, onClose }) {
   if (!src) return null
 
-  return (
-    <div className="photo-viewer" onClick={onClose}>
+  return createPortal(
+    <div className="photo-viewer" onClick={onClose} style={{ zIndex: 999999 }}>
       <div
         className="photo-viewer__card"
         onClick={(e) => e.stopPropagation()}
@@ -12,6 +14,7 @@ export function PhotoViewer({ src, onClose }) {
           Close
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

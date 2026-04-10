@@ -15,6 +15,8 @@ export function MainBoard({
   assigneeFilter,
   onAssigneeFilterChange,
   onOpenBackgroundPicker,
+  onOpenBoardHistory,
+  onOpenBoardChat,
   children,
 }) {
   const [titleDraft, setTitleDraft] = useState(title)
@@ -321,12 +323,14 @@ export function MainBoard({
             <button
               type="button"
               className="app-header__bg-btn"
+              onClick={() => onOpenBoardHistory?.()}
             >
               Board history
             </button>
             <button
               type="button"
               className="app-header__bg-btn"
+              onClick={() => onOpenBoardChat?.()}
             >
               Chat
             </button>

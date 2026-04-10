@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Spinner } from '../Spinner/Spinner'
 
 export function BackgroundPickerModal({
@@ -26,7 +27,7 @@ export function BackgroundPickerModal({
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div
       className="bg-picker-overlay"
       onClick={onClose}
@@ -169,6 +170,7 @@ export function BackgroundPickerModal({
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

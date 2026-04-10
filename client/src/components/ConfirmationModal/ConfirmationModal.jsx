@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 export function ConfirmationModal({ title, message, onConfirm, onCancel, confirmText = 'Delete', cancelText = 'Cancel' }) {
   // Prevent scrolling on the body when modal is open
@@ -9,7 +10,7 @@ export function ConfirmationModal({ title, message, onConfirm, onCancel, confirm
     }
   }, [])
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onCancel}>
       <div 
         className="modal-content" 
@@ -38,6 +39,7 @@ export function ConfirmationModal({ title, message, onConfirm, onCancel, confirm
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

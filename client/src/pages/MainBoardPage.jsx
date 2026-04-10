@@ -10,6 +10,8 @@ import { TodoList } from '../components/TodoList/TodoList'
 import { PhotoViewer } from '../components/PhotoViewer/PhotoViewer'
 import { ConfirmationModal } from '../components/ConfirmationModal/ConfirmationModal'
 import { CardModal } from '../components/CardModal/CardModal'
+import { BoardHistoryModal } from '../components/BoardHistoryModal/BoardHistoryModal'
+import { BoardChatModal } from '../components/BoardChatModal/BoardChatModal'
 import { inputAutofillIgnoreProps } from '../utils/inputAutofillIgnoreProps'
 import { generateAnimatedBackgroundTheme } from '../utils/generateAnimatedBackgroundTheme'
 
@@ -120,6 +122,8 @@ export default function MainBoardPage() {
     () => readStoredBackground().animatedTheme,
   )
   const [bgPickerOpen, setBgPickerOpen] = useState(false)
+  const [boardHistoryOpen, setBoardHistoryOpen] = useState(false)
+  const [boardChatOpen, setBoardChatOpen] = useState(false)
   const [bgPhotos, setBgPhotos] = useState([])
   const [bgLoading, setBgLoading] = useState(false)
   const [bgError, setBgError] = useState(null)
@@ -269,6 +273,8 @@ export default function MainBoardPage() {
           assigneeFilter={assigneeFilter}
           onAssigneeFilterChange={setAssigneeFilter}
           onOpenBackgroundPicker={openBackgroundPicker}
+          onOpenBoardHistory={() => setBoardHistoryOpen(true)}
+          onOpenBoardChat={() => setBoardChatOpen(true)}
         >
           <DragDropContext onDragEnd={handleBoardDragEnd}>
             <div className="main-board__row">
@@ -413,6 +419,18 @@ export default function MainBoardPage() {
         </MainBoard>
       </main>
 
+      <BoardHistoryModal
+        open={boardHistoryOpen}
+        onClose={() => setBoardHistoryOpen(false)}
+        columns={columns}
+        todos={todos}
+      />
+
+      <BoardChatModal
+        open={boardChatOpen}
+        onClose={() => setBoardChatOpen(false)}
+      />
+
       <BackgroundPickerModal
         open={bgPickerOpen}
         onClose={() => setBgPickerOpen(false)}
@@ -444,8 +462,6 @@ export default function MainBoardPage() {
           setAnimatedTheme(generateAnimatedBackgroundTheme())
         }}
       />
-
-      <PhotoViewer src={viewerPhoto} onClose={() => setViewerPhoto(null)} />
 
       {openCard ? (
         <CardModal
@@ -489,6 +505,8 @@ export default function MainBoardPage() {
           onCancel={() => setColumnToDelete(null)}
         />
       )}
+
+      <PhotoViewer src={viewerPhoto} onClose={() => setViewerPhoto(null)} />
     </>
   )
 }
